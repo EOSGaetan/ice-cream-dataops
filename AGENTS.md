@@ -12,8 +12,16 @@ the pipeline, and visualize it in Charts and Canvas.
 
 Everything is defined as code and deployed with the **Cognite Toolkit (`cdf`)**.
 
-**We work locally only.** No GitHub repository, no GitHub Actions. Do not run `git init`,
-`cdf repo init`, or propose CI/CD unless I ask.
+**GitHub (since 2026-10-06).** The project is mirrored in the private repository
+`EOSGaetan/ice-cream-dataops`, through a clone at `C:\dev\cdf-bootcamp-33` (outside this
+synced folder). This folder stays the complete local copy and is not a git repository: do not
+run `git init` here. Kept out of the repository: `.env*`, `build/`, `build_prod/`, the deck
+PDF, `report/`, the root `.claude/`, and in `icf-oee/` its `.git`, `node_modules` and `dist`.
+A change made in one folder must be copied to the other. I run every `git commit` and
+`git push` myself; you prepare the clone (copy files, `git add`, `.gitignore`) and verify
+after the push. The Object IDs below must be removed (history included) before the repository
+is ever made public. No GitHub Actions yet: do not run `cdf repo init` or add workflows
+unless I ask.
 
 ## Schedule
 
