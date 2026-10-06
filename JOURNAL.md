@@ -387,6 +387,27 @@ pour porter le projet local sur GitHub est maintenant la **phase 13 du mode opé
   Avec un compte GitHub gratuit, environnements et protection de branche n'existent que sur un
   dépôt public ; l'auteur d'une pull request ne peut pas approuver la sienne.
 - `git` 2.54 est installé sur le poste, sans `user.name` ni `user.email` ; `gh` n'est pas installé.
+
+**Dépôt GitHub : transfert commencé le 2026-10-06 (étape 1 de la phase 13).** Dépôt privé
+`EOSGaetan/ice-cream-dataops`, créé par moi sur github.com avec un `.gitignore` Python et un
+`README.md`.
+- Cloné dans `C:\dev\cdf-bootcamp-33` (hors dossier synchronisé). La connexion s'est faite par
+  Git Credential Manager dans le navigateur ; le clone doit être lancé depuis le panneau
+  Terminal, le shell de Claude refuse toute invite (`user interactivity has been disabled`).
+- Projet copié dans le clone par `robocopy`, le dossier d'origine reste intact. Écartés :
+  `.env`, `.env.prod`, `build/`, `build_prod/`, le deck PDF, et dans `icf-oee/` son `.git`,
+  `node_modules`, `dist`. 338 fichiers suivis, 7,7 Mo.
+- `.gitignore` complété : `.env.*`, `!.env.tmpl`, `build_prod/`, le deck, `node_modules/`, et
+  `!icf-oee/src/lib/` car la règle `lib/` du modèle Python ignorait ce dossier de code.
+- Contrôle : aucune valeur de client ID, client secret, tenant ID ou token URL dans les
+  fichiers suivis ; seuls y figurent le cluster, les noms de projet et les Object IDs de
+  `AGENTS.md` (à retirer si le dépôt devient public).
+- **Push fait par moi le 2026-10-06** (le mode automatique de Claude refuse commit et push) :
+  commit `8cc7720` sur `origin/main`, 339 fichiers, aucun fichier `.env*` (vérifié par
+  `git ls-tree`). Identité git réglée dans le clone seulement (adresse `noreply` GitHub).
+- Partage pour l'évaluation : dépôt privé, donc inviter le formateur dans Settings >
+  Collaborators (il aura un accès en écriture, seul rôle possible sur un dépôt personnel).
+- Reste ensuite : environnements `test`/`prod`, protection de `main`, workflows (phase 13).
 - Mémo Word mis à jour et régénéré le 2026-10-06 (9 pages, annexes toujours sur la dernière) :
   nouvelle section 9 « Path to the GitHub repository » (grille, 5 étapes, 4 points d'attention,
   mention « documented, not executed »), anciennes sections 9 et 10 renumérotées 10 et 11,
