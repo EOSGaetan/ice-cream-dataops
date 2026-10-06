@@ -233,3 +233,5 @@ build_prod/
 node_modules/
 # App source folder caught by the Python template's lib/ rule
 !icf-oee/src/lib/
+# Report and memo stay local, not part of the evaluated repository
+report/
