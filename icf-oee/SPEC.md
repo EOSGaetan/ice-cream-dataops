@@ -16,8 +16,14 @@
 
 ### Acceptance Scenarios
 
-- Given the app is open, when no site is selected, then the list of the 10 sites is offered
-  and the page asks me to select one.
+- Given the app is open, when nothing was saved, then the Overview tab shows the 10 sites on a
+  world map, each coloured by the level of its mean OEE, and a table with one row per site.
+- Given the Overview tab, when I hover a site on the map, then a card shows the site OEE and
+  the three units with the lowest OEE; the table below shows the same figures for every site.
+- Given the Overview tab, when I select a site on the map or a row of the table, then the Site
+  tab opens on that site.
+- Given the Site tab, when no site is selected, then the list of the 10 sites is offered and
+  the page asks me to select one.
 - Given I select a site, when its data has loaded, then four tiles summarize the site (mean
   OEE, number of units, units below 70%, lowest unit) and a table lists every unit of that
   site that has OEE time series, lowest OEE first, with its latest OEE, quality, performance
@@ -28,8 +34,10 @@
   is charted next to the table over the 7 days that end at its latest value, with the 70%
   threshold as a dashed line and a text summary (mean, minimum, maximum, hours below 70%);
   the row is marked as selected.
-- Given I selected a site and a unit, when I reload the page or share its URL, then the same
-  site and unit are selected.
+- Given a unit is selected, when I pick the 1W, 1M or 1Y time frame, then the trend covers the
+  last 7, 30 or 365 days that end at the latest value (hourly, 4-hour or daily averages).
+- Given I selected a tab, a site, a unit and a time frame, when I reload the page or share its
+  URL, then the same selection is restored.
 - Given a request to CDF fails, when the page renders, then an error message says what could
   not be loaded.
 
@@ -59,6 +67,15 @@
   and let the user sort by any column.
 - FR-011: System MUST show the table and the trend side by side on large screens, without
   horizontal scrolling of the page.
+- FR-012: System MUST offer the trend time frames 1W (7 days, hourly averages), 1M (30 days,
+  4-hour averages) and 1Y (365 days, daily averages), all ending at the latest OEE datapoint.
+- FR-013: System MUST offer an Overview tab with a world map of the sites: one marker per
+  site, coloured by the level of the mean of the latest OEE of its units (FR-010 thresholds).
+- FR-014: System MUST show, when a site marker is hovered, the site OEE and the three units
+  with the lowest latest OEE, and MUST show the same figures for every site in a table below
+  the map, lowest site OEE first.
+- FR-015: System MUST open the Site tab on a site selected from the map or from the table,
+  and keep the selected tab and time frame in the host-synced state.
 
 ## Success Criteria
 
@@ -76,6 +93,10 @@
 - Read-only app, English UI, desktop first.
 - The 0.85 warning threshold is a choice of this app, not a bootcamp value.
 - The trend of quality, performance and availability is out of scope.
+- The asset data carries no coordinates: the city of each site is listed in the app
+  (`siteLocations.ts`). The map is an outline drawn in the app; no map service is called.
+- A custom date range for the trend is out of scope; the shortcuts are the only time frames.
+- The overview reads the units of all sites (about 40 requests) each time it is opened.
 
 ---
 

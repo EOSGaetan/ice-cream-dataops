@@ -167,10 +167,23 @@ describe(CdfOeeService.name, () => {
   });
 
   describe('getOeeTrend', () => {
+    it.each([
+      { range: '1m', days: 30, granularity: '4h' },
+      { range: '1y', days: 365, granularity: '1d' },
+    ] as const)('asks for $granularity averages over $days days for the $range time frame', async ({ range, days, granularity }) => {
+      retrieve.mockResolvedValue([]);
+
+      await service.getOeeTrend('U1', UPDATED_AT, range);
+
+      expect(retrieve).toHaveBeenCalledWith(
+        expect.objectContaining({ start: UPDATED_AT - days * 24 * 60 * 60 * 1000, end: UPDATED_AT + 1, granularity })
+      );
+    });
+
     it('asks for the hourly average over the 7 days that end at the given time', async () => {
       retrieve.mockResolvedValue([]);
 
-      await service.getOeeTrend('U1', UPDATED_AT);
+      await service.getOeeTrend('U1', UPDATED_AT, '1w');
 
       expect(retrieve).toHaveBeenCalledWith({
         items: [{ instanceId: { space: 'oee_ts_space', externalId: 'U1:oee' } }],
@@ -197,7 +210,7 @@ describe(CdfOeeService.name, () => {
       ];
       retrieve.mockResolvedValue(aggregates);
 
-      await expect(service.getOeeTrend('U1', UPDATED_AT)).resolves.toEqual([
+      await expect(service.getOeeTrend('U1', UPDATED_AT, '1w')).resolves.toEqual([
         { timestamp: UPDATED_AT - 3600000, oee: 0.4 },
         { timestamp: UPDATED_AT, oee: 0.8 },
       ]);
@@ -206,13 +219,13 @@ describe(CdfOeeService.name, () => {
     it('returns no point when the time series is empty', async () => {
       retrieve.mockResolvedValue([]);
 
-      await expect(service.getOeeTrend('U1', UPDATED_AT)).resolves.toEqual([]);
+      await expect(service.getOeeTrend('U1', UPDATED_AT, '1w')).resolves.toEqual([]);
     });
 
     it('rejects when CDF fails', async () => {
       retrieve.mockRejectedValue(new Error('500'));
 
-      await expect(service.getOeeTrend('U1', UPDATED_AT)).rejects.toThrow('500');
+      await expect(service.getOeeTrend('U1', UPDATED_AT, '1w')).rejects.toThrow('500');
     });
   });
 });

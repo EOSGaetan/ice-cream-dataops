@@ -1,12 +1,23 @@
 import { createContext, useContext } from 'react';
 
+import { DEFAULT_TREND_RANGE, isOeeView, isTrendRangeId } from './types';
+import type { OeeView, TrendRangeId } from './types';
+
 /** What the user selected. Host-synced: it survives a reload and travels with a shared link. */
 export type OeeState = {
+  view: OeeView;
   siteId: string | null;
   unitId: string | null;
+  /** Time frame of the OEE trend. */
+  range: TrendRangeId;
 };
 
-export const DEFAULT_OEE_STATE: OeeState = { siteId: null, unitId: null };
+export const DEFAULT_OEE_STATE: OeeState = {
+  view: 'overview',
+  siteId: null,
+  unitId: null,
+  range: DEFAULT_TREND_RANGE,
+};
 
 export type OeeStateStorage = {
   state: OeeState;
@@ -31,8 +42,12 @@ export function parseOeeState(serialized: string | undefined): OeeState {
     if (typeof parsed !== 'object' || parsed === null) return DEFAULT_OEE_STATE;
     const siteId = 'siteId' in parsed && typeof parsed.siteId === 'string' ? parsed.siteId : null;
     const unitId = 'unitId' in parsed && typeof parsed.unitId === 'string' ? parsed.unitId : null;
+    const range = 'range' in parsed && isTrendRangeId(parsed.range) ? parsed.range : DEFAULT_TREND_RANGE;
+    // Links saved before the tabs existed have no view: a selected site means the site tab.
+    const fallbackView: OeeView = siteId === null ? 'overview' : 'site';
+    const view = 'view' in parsed && isOeeView(parsed.view) ? parsed.view : fallbackView;
     // A unit only makes sense inside a site.
-    return { siteId, unitId: siteId === null ? null : unitId };
+    return { view, siteId, unitId: siteId === null ? null : unitId, range };
   } catch {
     return DEFAULT_OEE_STATE;
   }

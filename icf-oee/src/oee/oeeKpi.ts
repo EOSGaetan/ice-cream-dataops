@@ -45,3 +45,11 @@ export function summarizeSite(units: UnitOee[]): SiteSummary {
     lowestUnit,
   };
 }
+
+/** The units with the lowest OEE, lowest first; units without OEE value are left out. */
+export function lowestUnits(units: UnitOee[], count: number): UnitOee[] {
+  return units
+    .filter((unit) => unit.oee !== null)
+    .sort((a, b) => (a.oee ?? 0) - (b.oee ?? 0) || a.name.localeCompare(b.name))
+    .slice(0, count);
+}

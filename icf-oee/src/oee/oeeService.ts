@@ -2,16 +2,16 @@ import type { CogniteClient } from '@cognite/sdk';
 
 import { cdfTaskRunner } from '../shared/utils/semaphore';
 
-import { ASSET_SPACE, OEE_METRICS, OEE_SPACE } from './types';
-import type { OeeMetric, Site, TrendPoint, UnitOee } from './types';
+import { ASSET_SPACE, getTrendRange, OEE_METRICS, OEE_SPACE } from './types';
+import type { OeeMetric, Site, TrendPoint, TrendRangeId, UnitOee } from './types';
 
 export interface OeeService {
   /** The sites: the assets without a parent. */
   listSites(): Promise<Site[]>;
   /** The assets of a site that have OEE time series, with their latest values. */
   listUnits(siteExternalId: string): Promise<UnitOee[]>;
-  /** Hourly average OEE of a unit over the 7 days that end at `endMs`. */
-  getOeeTrend(unitExternalId: string, endMs: number): Promise<TrendPoint[]>;
+  /** Average OEE of a unit over the time frame that ends at `endMs`. */
+  getOeeTrend(unitExternalId: string, endMs: number, rangeId: TrendRangeId): Promise<TrendPoint[]>;
 }
 
 /** The subset of the Cognite SDK this service calls. */
@@ -36,7 +36,6 @@ const ASSET_VIEW_KEY = 'CogniteAsset/v1';
 const PAGE_SIZE = 1000;
 /** `timeseries/data/latest` accepts at most 100 items per request. */
 const LATEST_BATCH_SIZE = 100;
-const TREND_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 
 export class CdfOeeService implements OeeService {
   public constructor(
@@ -82,15 +81,16 @@ export class CdfOeeService implements OeeService {
       .sort(byName);
   }
 
-  public async getOeeTrend(unitExternalId: string, endMs: number): Promise<TrendPoint[]> {
+  public async getOeeTrend(unitExternalId: string, endMs: number, rangeId: TrendRangeId): Promise<TrendPoint[]> {
+    const range = getTrendRange(rangeId);
     const result = await this.runner.schedule(() =>
       this.client.datapoints.retrieve({
         items: [{ instanceId: { space: OEE_SPACE, externalId: seriesExternalId(unitExternalId, 'oee') } }],
-        start: endMs - TREND_WINDOW_MS,
-        // `end` is exclusive: add 1 ms to keep the hour of the latest datapoint.
+        start: endMs - range.windowMs,
+        // `end` is exclusive: add 1 ms to keep the period of the latest datapoint.
         end: endMs + 1,
         aggregates: ['average'],
-        granularity: '1h',
+        granularity: range.granularity,
         limit: 1000,
       })
     );

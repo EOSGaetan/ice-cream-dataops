@@ -12,15 +12,17 @@ const CHART_CONFIG: ChartConfig = {
 
 type OeeTrendChartProps = {
   unitName: string;
+  /** How the datapoints are averaged: "hourly", "4-hour" or "daily". */
+  bucket: string;
   points: TrendPoint[];
 };
 
-export function OeeTrendChart({ unitName, points }: OeeTrendChartProps) {
+export function OeeTrendChart({ unitName, bucket, points }: OeeTrendChartProps) {
   return (
     <div className="h-80 w-full min-w-0">
       <ChartContainer
         config={CHART_CONFIG}
-        aria-label={`Hourly average OEE of ${unitName}, with the ${formatAxisPercent(OEE_ALERT_THRESHOLD)} alert threshold`}
+        aria-label={`${capitalize(bucket)} average OEE of ${unitName}, with the ${formatAxisPercent(OEE_ALERT_THRESHOLD)} alert threshold`}
         className="h-full w-full"
       >
         <LineChart data={points} margin={{ top: 8, right: 16, bottom: 0, left: 0 }}>
@@ -56,6 +58,10 @@ export function OeeTrendChart({ unitName, points }: OeeTrendChartProps) {
       </ChartContainer>
     </div>
   );
+}
+
+function capitalize(text: string): string {
+  return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
 function formatAxisPercent(ratio: number): string {

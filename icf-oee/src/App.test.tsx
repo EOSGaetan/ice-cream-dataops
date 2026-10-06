@@ -77,7 +77,7 @@ describe('App', () => {
     });
 
     await waitFor(() => expect(screen.getByRole('heading', { name: 'Ice Cream Factory OEE' })).toBeInTheDocument());
-    expect(screen.getByText('No site selected')).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Overview' })).toHaveAttribute('aria-selected', 'true');
     expect(createService).toHaveBeenCalledWith(expect.any(CogniteClient));
     expect(service.listSites).toHaveBeenCalled();
   });

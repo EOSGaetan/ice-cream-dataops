@@ -22,9 +22,9 @@ export type TrendSummary = {
   max: number;
   start: number;
   end: number;
-  /** Hours whose average OEE is below the alert threshold. */
-  hoursBelowAlert: number;
-  hours: number;
+  /** Averaged periods whose OEE is below the alert threshold. */
+  belowAlert: number;
+  count: number;
 };
 
 export function summarizeTrend(points: TrendPoint[]): TrendSummary | null {
@@ -37,7 +37,7 @@ export function summarizeTrend(points: TrendPoint[]): TrendSummary | null {
     max: Math.max(...values),
     start: points[0].timestamp,
     end: points[points.length - 1].timestamp,
-    hoursBelowAlert: values.filter((value) => value < OEE_ALERT_THRESHOLD).length,
-    hours: values.length,
+    belowAlert: values.filter((value) => value < OEE_ALERT_THRESHOLD).length,
+    count: values.length,
   };
 }

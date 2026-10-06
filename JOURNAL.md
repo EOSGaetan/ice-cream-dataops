@@ -701,6 +701,34 @@ commitée ni déployée.**
   `npx @cognite/cli@latest apps deactivate` (non essayé).
 - Prod : 0.0.2 ni déployée ni activée. Commandes : `npm --prefix icf-oee run deploy --
   -d cdf-bootcamp-33-prod` puis `npm --prefix icf-oee run activate -- -d cdf-bootcamp-33-prod`.
+- **Décision du 2026-10-06 (moi) : on ne déploie plus l'app en prod pour l'instant**, tout se
+  passe en test.
+- **Version 0.0.3 écrite, déployée puis activée en test le 2026-10-06** : après ma validation
+  du brouillon, `npm --prefix icf-oee run activate -- -d cdf-bootcamp-33-test` a répondu
+  `0.0.3 is now PUBLISHED`, `ACTIVE`, `Superseded 0.0.2 → PUBLISHED`. L'onglet « Custom apps »
+  ouvre donc la 0.0.3 (vérifié). Commitée dans le dépôt de l'app : `4c82238`.
+  **Fusion affiche toujours le bandeau « Only you can run this app. Have a certified builder
+  sign it to share it with others » : sans signature, l'app active n'est utilisable que par
+  moi.** La prochaine modification passera par une 0.0.4.
+  - Courbe : raccourcis de période **1W / 1M / 1Y** (7, 30, 365 jours ; moyennes horaires,
+    par 4 h, journalières), toujours calés sur la dernière valeur de l'unité. Les données
+    n'existent que depuis fin septembre 2026 : 1M et 1Y montrent la même quinzaine de jours.
+    Pas de plage de dates libre.
+  - Nouvel onglet **Overview** (ouvert par défaut) : carte du monde avec les 10 sites, marqueur
+    coloré selon l'OEE moyen du site, survol = OEE du site + les 3 unités à l'OEE le plus bas,
+    clic = ouverture du site ; dessous, un tableau qui reprend les mêmes chiffres (une ligne
+    par site). L'ancien écran est l'onglet **Site**.
+  - Carte : contour des terres Natural Earth (domaine public) transformé une fois en chemin SVG
+    (`src/oee/worldMap.ts`, généré par un script jetable avec `world-atlas`) ; aucun service de
+    carte appelé, aucun paquet npm ajouté. Les assets n'ont pas de coordonnées : villes des
+    sites en dur dans `src/oee/siteLocations.ts`.
+  - L'onglet et la période sont gardés dans l'adresse avec le site et l'unité.
+  - Contrôles : 86 tests, couverture 95 % des lignes, lint et build OK (JavaScript 1,10 Mo).
+    Rendu vérifié dans Fusion test avec les vraies données (carte, survol sur Chicago, tableau).
+  - Constat sur les vraies données : les 10 sites ont un OEE moyen de 88 à 92 %, donc tous
+    les marqueurs sont verts ; la couleur par moyenne distingue peu les sites.
+  - Piège : un anneau de terres qui traverse l'antiméridien (Tchoukotka) dessine une bande sur
+    toute la carte ; le script coupe le tracé à cet endroit.
 - Clone GitHub `C:\dev\cdf-bootcamp-33` : `icf-oee/` y était resté au squelette d'origine ;
   remis à niveau le 2026-10-06 par l'assistant (copie + `git add`), avec
   `flows_app_developer.Group.yaml` et ce journal. Commit et push à faire par moi.

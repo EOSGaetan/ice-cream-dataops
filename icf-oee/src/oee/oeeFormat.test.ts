@@ -32,13 +32,13 @@ describe(summarizeTrend.name, () => {
     expect(summarizeTrend([])).toBeNull();
   });
 
-  it('computes mean, minimum, maximum, period and the hours below the alert threshold', () => {
+  it('computes mean, minimum, maximum, period and the points below the alert threshold', () => {
     const summary = summarizeTrend([
       { timestamp: 1000, oee: 0.5 },
       { timestamp: 2000, oee: 1 },
       { timestamp: 3000, oee: 0 },
     ]);
 
-    expect(summary).toEqual({ mean: 0.5, min: 0, max: 1, start: 1000, end: 3000, hoursBelowAlert: 2, hours: 3 });
+    expect(summary).toEqual({ mean: 0.5, min: 0, max: 1, start: 1000, end: 3000, belowAlert: 2, count: 3 });
   });
 });

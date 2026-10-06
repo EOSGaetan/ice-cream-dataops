@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { oeeLevel, summarizeSite } from './oeeKpi';
+import { lowestUnits, oeeLevel, summarizeSite } from './oeeKpi';
 import type { UnitOee } from './types';
 
 describe(oeeLevel.name, () => {
@@ -51,6 +51,21 @@ describe(summarizeSite.name, () => {
       belowAlertCount: 0,
       lowestUnit: makeUnit('A', 0.8),
     });
+  });
+});
+
+describe(lowestUnits.name, () => {
+  it('returns the units with the lowest OEE, lowest first', () => {
+    const units = [makeUnit('A', 0.9), makeUnit('B', 0.5), makeUnit('C', 0.1), makeUnit('D', 0.7)];
+
+    expect(lowestUnits(units, 3).map((unit) => unit.externalId)).toEqual(['C', 'B', 'D']);
+  });
+
+  it('leaves out the units without OEE value and does not change the input', () => {
+    const units = [makeUnit('A', 0.9), makeUnit('B', null), makeUnit('C', 0.1)];
+
+    expect(lowestUnits(units, 3).map((unit) => unit.externalId)).toEqual(['C', 'A']);
+    expect(units.map((unit) => unit.externalId)).toEqual(['A', 'B', 'C']);
   });
 });
 
