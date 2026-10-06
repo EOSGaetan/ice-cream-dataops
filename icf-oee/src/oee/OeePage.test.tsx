@@ -8,6 +8,7 @@ import type { FakeOeeService } from '../__mocks__/oee';
 import { OeePage } from './OeePage';
 
 const SITE_TAB = JSON.stringify({ view: 'site' });
+const UNIT_TYPES = JSON.stringify({ view: 'units' });
 const OSLO = JSON.stringify({ view: 'site', siteId: 'oslo' });
 const OSLO_BALANCE_TANK = JSON.stringify({ view: 'site', siteId: 'oslo', unitId: 'OSPRPATA241' });
 
@@ -33,6 +34,7 @@ describe(OeePage.name, () => {
     expect(screen.getByText('Full Icecreamergies')).toBeInTheDocument();
     expect(screen.getByRole('img', { name: 'Full Icecreamergies logo' })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Overview' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tab', { name: 'Unit types' })).toHaveAttribute('aria-selected', 'false');
     expect(screen.getByRole('tab', { name: 'Site' })).toHaveAttribute('aria-selected', 'false');
   });
 
@@ -103,7 +105,7 @@ describe(OeePage.name, () => {
       await waitFor(() => expect(screen.getByRole('heading', { level: 2, name: 'Units of Oslo' })).toBeInTheDocument());
       expect(screen.getByRole('tab', { name: 'Site' })).toHaveAttribute('aria-selected', 'true');
       expect(syncState).toHaveBeenCalledWith(
-        JSON.stringify({ view: 'site', siteId: 'oslo', unitId: null, range: '1w' })
+        JSON.stringify({ view: 'site', siteId: 'oslo', unitId: null, unitType: null, range: '1w' })
       );
     });
 
@@ -116,6 +118,120 @@ describe(OeePage.name, () => {
       await waitFor(() =>
         expect(screen.getByRole('heading', { level: 2, name: 'Units of Houston' })).toBeInTheDocument()
       );
+    });
+  });
+
+  describe('unit types tab', () => {
+    it('shows a loading indicator while the statistics load', async () => {
+      service.getUnitPeriodStats.mockReturnValue(new Promise(() => undefined));
+
+      render(<OeePage />, { wrapper: makeOeeWrapper({ service, initialState: UNIT_TYPES }) });
+
+      expect(screen.getByRole('tab', { name: 'Unit types' })).toHaveAttribute('aria-selected', 'true');
+      expect(screen.getByText('Loading the statistics of every unit…')).toBeInTheDocument();
+    });
+
+    it('shows the statistics error', async () => {
+      service.getUnitPeriodStats.mockRejectedValue(new Error('500'));
+
+      render(<OeePage />, { wrapper: makeOeeWrapper({ service, initialState: UNIT_TYPES }) });
+
+      await waitFor(() =>
+        expect(screen.getByText('The unit statistics could not be loaded. 500')).toBeInTheDocument()
+      );
+    });
+
+    it('says when no unit has statistics', async () => {
+      service.listUnits.mockResolvedValue([]);
+
+      render(<OeePage />, { wrapper: makeOeeWrapper({ service, initialState: UNIT_TYPES }) });
+
+      await waitFor(() => expect(screen.getByText('No unit statistics')).toBeInTheDocument());
+    });
+
+    it('ranks the unit types of all sites in a chart with a text summary', async () => {
+      render(<OeePage />, { wrapper: makeOeeWrapper({ service, initialState: UNIT_TYPES }) });
+
+      expect(
+        await screen.findByRole('heading', { level: 2, name: 'Most problematic unit types' })
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          'Share of the hourly averages below 70% OEE, all sites together. ' +
+            'Highest: Chocolate Spray (50.0%), Balance Tank (25.0%).'
+        )
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole('img', { name: 'Share of the time below 70% OEE for the 2 most problematic unit types' })
+      ).toBeInTheDocument();
+    });
+
+    it('lists every unit type with its statistics, the most problematic first', async () => {
+      render(<OeePage />, { wrapper: makeOeeWrapper({ service, initialState: UNIT_TYPES }) });
+
+      const table = await screen.findByRole('table', { name: 'Statistics by unit type' });
+      const rows = within(table)
+        .getAllByRole('row')
+        .map((row) => row.textContent ?? '')
+        .filter((text) => /Chocolate Spray|Balance Tank/.test(text));
+
+      expect(screen.getByText('2 types, 4 units. Select a row to see the units of a type.')).toBeInTheDocument();
+      expect(rows).toHaveLength(2);
+      expect(rows[0]).toContain('Chocolate Spray');
+      expect(rows[0]).toContain('50.0%');
+      expect(rows[0]).toContain('60.0%');
+      expect(rows[1]).toContain('Balance Tank');
+      expect(rows[1]).toContain('25.0%');
+      expect(rows[1]).toContain('80.0%');
+      expect(screen.getByText('No unit type selected')).toBeInTheDocument();
+    });
+
+    it('offers the time frames and reloads the statistics over one month', async () => {
+      render(<OeePage />, { wrapper: makeOeeWrapper({ service, initialState: UNIT_TYPES }) });
+      const timeFrames = await screen.findByRole('tablist', { name: 'Time frame of the statistics' });
+
+      await userEvent.click(within(timeFrames).getByRole('tab', { name: '1M' }));
+
+      await waitFor(() =>
+        expect(service.getUnitPeriodStats).toHaveBeenCalledWith(expect.any(Array), UPDATED_AT, '1m')
+      );
+      expect(await screen.findByText(/over the last\s+30 days/)).toBeInTheDocument();
+    });
+
+    it('shows the units of the type whose row is clicked, site by site', async () => {
+      const syncState = vi.fn<(serialized: string) => void>();
+      render(<OeePage />, { wrapper: makeOeeWrapper({ service, syncState, initialState: UNIT_TYPES }) });
+      const table = await screen.findByRole('table', { name: 'Statistics by unit type' });
+
+      await userEvent.click(await within(table).findByText('Balance Tank'));
+
+      expect(await screen.findByRole('heading', { level: 2, name: 'Balance Tank by site' })).toBeInTheDocument();
+      expect(
+        screen.getByText('2 units in 2 sites. Select a row to open the unit.')
+      ).toBeInTheDocument();
+      const detail = screen.getByRole('table', { name: 'Units of the selected type' });
+      expect(await within(detail).findByText('Houston')).toBeInTheDocument();
+      expect(within(detail).getByText('Oslo')).toBeInTheDocument();
+      expect(syncState).toHaveBeenCalledWith(
+        JSON.stringify({ view: 'units', siteId: null, unitId: null, unitType: 'Balance Tank', range: '1w' })
+      );
+    });
+
+    it('opens the unit in the site tab when a unit of the type is clicked', async () => {
+      render(<OeePage />, {
+        wrapper: makeOeeWrapper({
+          service,
+          initialState: JSON.stringify({ view: 'units', unitType: 'Balance Tank' }),
+        }),
+      });
+      const detail = await screen.findByRole('table', { name: 'Units of the selected type' });
+
+      await userEvent.click(await within(detail).findByText('Oslo'));
+
+      await waitFor(() =>
+        expect(screen.getByRole('heading', { level: 2, name: 'OEE trend of Balance Tank' })).toBeInTheDocument()
+      );
+      expect(screen.getByRole('tab', { name: 'Site' })).toHaveAttribute('aria-selected', 'true');
     });
   });
 
@@ -221,7 +337,7 @@ describe(OeePage.name, () => {
         expect(screen.getByRole('heading', { level: 2, name: 'OEE trend of Balance Tank' })).toBeInTheDocument()
       );
       expect(syncState).toHaveBeenCalledWith(
-        JSON.stringify({ view: 'site', siteId: 'oslo', unitId: 'OSPRPATA241', range: '1w' })
+        JSON.stringify({ view: 'site', siteId: 'oslo', unitId: 'OSPRPATA241', unitType: null, range: '1w' })
       );
       await waitFor(() =>
         expect(
@@ -257,7 +373,7 @@ describe(OeePage.name, () => {
       await waitFor(() => expect(service.getOeeTrend).toHaveBeenCalledWith('OSPRPATA241', UPDATED_AT, '1y'));
       expect(await screen.findByText('OSPRPATA241 · daily average, 365 days')).toBeInTheDocument();
       expect(syncState).toHaveBeenCalledWith(
-        JSON.stringify({ view: 'site', siteId: 'oslo', unitId: 'OSPRPATA241', range: '1y' })
+        JSON.stringify({ view: 'site', siteId: 'oslo', unitId: 'OSPRPATA241', unitType: null, range: '1y' })
       );
     });
 

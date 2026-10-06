@@ -30,13 +30,48 @@ export type TrendPoint = {
   oee: number;
 };
 
-const DAY_MS = 24 * 60 * 60 * 1000;
+const HOUR_MS = 60 * 60 * 1000;
+export const DAY_MS = 24 * HOUR_MS;
 
-/** The time frames of the trend: how far back it goes and how the datapoints are averaged. */
+/**
+ * The time frames: how far back they go and how the datapoints are averaged (`granularity`,
+ * one average every `stepMs`). `coarseGranularity` is used when only the mean over the whole
+ * time frame matters.
+ */
 export const TREND_RANGES = [
-  { id: '1w', label: '1W', period: '7 days', windowMs: 7 * DAY_MS, granularity: '1h', bucket: 'hourly' },
-  { id: '1m', label: '1M', period: '30 days', windowMs: 30 * DAY_MS, granularity: '4h', bucket: '4-hour' },
-  { id: '1y', label: '1Y', period: '365 days', windowMs: 365 * DAY_MS, granularity: '1d', bucket: 'daily' },
+  {
+    id: '1w',
+    label: '1W',
+    period: '7 days',
+    windowMs: 7 * DAY_MS,
+    granularity: '1h',
+    stepMs: HOUR_MS,
+    bucket: 'hourly',
+    coarseGranularity: '1d',
+    coarseStepMs: DAY_MS,
+  },
+  {
+    id: '1m',
+    label: '1M',
+    period: '30 days',
+    windowMs: 30 * DAY_MS,
+    granularity: '4h',
+    stepMs: 4 * HOUR_MS,
+    bucket: '4-hour',
+    coarseGranularity: '1d',
+    coarseStepMs: DAY_MS,
+  },
+  {
+    id: '1y',
+    label: '1Y',
+    period: '365 days',
+    windowMs: 365 * DAY_MS,
+    granularity: '1d',
+    stepMs: DAY_MS,
+    bucket: 'daily',
+    coarseGranularity: '30d',
+    coarseStepMs: 30 * DAY_MS,
+  },
 ] as const;
 
 export type TrendRange = (typeof TREND_RANGES)[number];
@@ -51,10 +86,24 @@ export function getTrendRange(id: TrendRangeId): TrendRange {
   return TREND_RANGES.find((range) => range.id === id) ?? TREND_RANGES[0];
 }
 
-/** The two tabs of the app. */
-export const OEE_VIEWS = ['overview', 'site'] as const;
+/** The tabs of the app. */
+export const OEE_VIEWS = ['overview', 'units', 'site'] as const;
 export type OeeView = (typeof OEE_VIEWS)[number];
 
 export function isOeeView(value: unknown): value is OeeView {
   return OEE_VIEWS.some((view) => view === value);
 }
+
+/** What one unit did over a time frame. */
+export type UnitPeriodStats = {
+  externalId: string;
+  /** Mean of the averaged periods (hours, 4 hours or days) of the time frame. */
+  meanOee: number | null;
+  /** Averaged periods that have an OEE value. */
+  periods: number;
+  /** Averaged periods whose OEE is below the alert threshold. */
+  periodsBelowAlert: number;
+  quality: number | null;
+  performance: number | null;
+  availability: number | null;
+};

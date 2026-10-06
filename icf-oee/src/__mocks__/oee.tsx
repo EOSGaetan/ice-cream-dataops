@@ -5,7 +5,7 @@ import { vi } from 'vitest';
 import { OeeDepsContext } from '../oee/oeeDeps';
 import type { OeeService } from '../oee/oeeService';
 import { OeeStateProvider } from '../oee/OeeStateProvider';
-import type { Site, TrendPoint, UnitOee } from '../oee/types';
+import type { Site, TrendPoint, UnitOee, UnitPeriodStats } from '../oee/types';
 
 export const UPDATED_AT = Date.UTC(2026, 9, 4, 12, 0);
 
@@ -40,6 +40,28 @@ export const TREND: TrendPoint[] = [
   { timestamp: UPDATED_AT, oee: 0.8 },
 ];
 
+/** Over the time frame: Balance Tank spends 25% of the periods below the alert threshold, Chocolate Spray 50%. */
+export const UNIT_STATS: UnitPeriodStats[] = [
+  {
+    externalId: 'OSPRPATA241',
+    meanOee: 0.8,
+    periods: 100,
+    periodsBelowAlert: 25,
+    quality: 0.9,
+    performance: 0.95,
+    availability: 0.9,
+  },
+  {
+    externalId: 'OSPRFICHSP463',
+    meanOee: 0.6,
+    periods: 100,
+    periodsBelowAlert: 50,
+    quality: 0.7,
+    performance: 0.9,
+    availability: 0.95,
+  },
+];
+
 export type FakeOeeService = {
   [Method in keyof OeeService]: ReturnType<typeof vi.fn<OeeService[Method]>>;
 };
@@ -49,6 +71,7 @@ export function makeOeeService(): FakeOeeService {
     listSites: vi.fn<OeeService['listSites']>(() => Promise.resolve(SITES)),
     listUnits: vi.fn<OeeService['listUnits']>(() => Promise.resolve(UNITS)),
     getOeeTrend: vi.fn<OeeService['getOeeTrend']>(() => Promise.resolve(TREND)),
+    getUnitPeriodStats: vi.fn<OeeService['getUnitPeriodStats']>(() => Promise.resolve(UNIT_STATS)),
   };
 }
 

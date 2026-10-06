@@ -13,6 +13,8 @@
    units, so that I can spot the units that underperform without opening one chart per unit.
 2. As an operations engineer, I want to open the OEE trend of one unit, so that I can see
    whether a low value is a one-off or a recurring drop.
+3. As an operations manager, I want to see which kind of unit causes the most problems across
+   all sites, so that I can prioritise an improvement that pays off worldwide.
 
 ### Acceptance Scenarios
 
@@ -22,6 +24,12 @@
   the three units with the lowest OEE; the table below shows the same figures for every site.
 - Given the Overview tab, when I select a site on the map or a row of the table, then the Site
   tab opens on that site.
+- Given the Unit types tab, when the statistics have loaded, then the units of all sites are
+  grouped by name, a chart ranks the ten types that spend the most time below 70% OEE over
+  the time frame, and a table gives for every type its number of units, time below 70%, mean
+  OEE, mean quality, performance and availability, and the site where it is the lowest.
+- Given the Unit types tab, when I select a type, then its units are listed site by site with
+  their mean OEE and time below 70%; selecting one opens it in the Site tab.
 - Given the Site tab, when no site is selected, then the list of the 10 sites is offered and
   the page asks me to select one.
 - Given I select a site, when its data has loaded, then four tiles summarize the site (mean
@@ -74,6 +82,15 @@
 - FR-014: System MUST show, when a site marker is hovered, the site OEE and the three units
   with the lowest latest OEE, and MUST show the same figures for every site in a table below
   the map, lowest site OEE first.
+- FR-016: System MUST offer a Unit types tab that groups the units of all sites by name and
+  computes, over the selected time frame ending at the latest OEE datapoint of any unit: the
+  mean OEE and the share of the averaged periods below the alert threshold (pooled over the
+  units of the type), the mean quality, performance and availability, and the site with the
+  lowest mean OEE.
+- FR-017: System MUST rank the unit types by time below the alert threshold, highest first,
+  chart the ten highest, and list the units of a selected type site by site.
+- FR-018: System MUST keep the selected unit type in the host-synced state, and use the same
+  time frame for the unit type statistics and for the trend.
 - FR-015: System MUST open the Site tab on a site selected from the map or from the table,
   and keep the selected tab and time frame in the host-synced state.
 
@@ -97,6 +114,9 @@
   (`siteLocations.ts`). The map is an outline drawn in the app; no map service is called.
 - A custom date range for the trend is out of scope; the shortcuts are the only time frames.
 - The overview reads the units of all sites (about 40 requests) each time it is opened.
+- A unit type is a unit name: the 628 units carry 30 names, each present in the 10 sites.
+- The unit type statistics read about 30 more requests (OEE averages of 628 units, 100 time
+  series and 10 000 aggregates per request at most); 43 for the 1Y time frame.
 
 ---
 

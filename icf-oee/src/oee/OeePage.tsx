@@ -6,6 +6,7 @@ import { ErrorMessage } from './OeeStates';
 import { SiteDetail } from './SiteDetail';
 import { SitesOverview } from './SitesOverview';
 import { COMPANY_NAME, isOeeView } from './types';
+import { UnitTypesView } from './UnitTypesView';
 import { useOeeViewModel } from './useOeeViewModel';
 
 export function OeePage() {
@@ -35,12 +36,19 @@ export function OeePage() {
         >
           <TabsList>
             <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="units">Unit types</TabsTrigger>
             <TabsTrigger value="site">Site</TabsTrigger>
           </TabsList>
 
           <TabsPanel value="overview">
             <div className="pt-6">
               <SitesOverview overview={overview} onOpenSite={openSite} />
+            </div>
+          </TabsPanel>
+
+          <TabsPanel value="units">
+            <div className="pt-6">
+              <UnitTypesView {...viewModel} />
             </div>
           </TabsPanel>
 

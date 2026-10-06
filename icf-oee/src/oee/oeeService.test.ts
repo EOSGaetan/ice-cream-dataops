@@ -230,6 +230,153 @@ describe(CdfOeeService.name, () => {
   });
 });
 
+describe('CdfOeeService.getUnitPeriodStats', () => {
+  // 2026-10-04 12:00 UTC: the 7-day window starts at 2026-09-27 00:00 UTC (whole UTC days).
+  const WEEK_START = Date.UTC(2026, 8, 27);
+  let retrieve: ReturnType<typeof vi.fn<OeeCdfClient['datapoints']['retrieve']>>;
+  let service: OeeService;
+
+  beforeEach(() => {
+    retrieve = vi.fn<OeeCdfClient['datapoints']['retrieve']>();
+    retrieve.mockResolvedValue([]);
+    service = createOeeService(
+      {
+        instances: { list: vi.fn<OeeCdfClient['instances']['list']>() },
+        datapoints: { retrieve, retrieveLatest: vi.fn<OeeCdfClient['datapoints']['retrieveLatest']>() },
+      },
+      { runner: { schedule: (fn) => fn() } }
+    );
+  });
+
+  it('asks nothing for no unit', async () => {
+    await expect(service.getUnitPeriodStats([], UPDATED_AT, '1w')).resolves.toEqual([]);
+    expect(retrieve).not.toHaveBeenCalled();
+  });
+
+  it('asks for the OEE at the granularity of the time frame, over whole days', async () => {
+    await service.getUnitPeriodStats(['U1', 'U2'], UPDATED_AT, '1w');
+
+    expect(retrieve).toHaveBeenCalledWith({
+      items: [
+        { instanceId: { space: 'oee_ts_space', externalId: 'U1:oee' } },
+        { instanceId: { space: 'oee_ts_space', externalId: 'U2:oee' } },
+      ],
+      start: WEEK_START,
+      end: UPDATED_AT + 1,
+      aggregates: ['average'],
+      granularity: '1h',
+      // 7.5 days of hourly averages, plus one.
+      limit: 182,
+      ignoreUnknownIds: true,
+    });
+  });
+
+  it('asks for the mean quality, performance and availability with a few large periods', async () => {
+    await service.getUnitPeriodStats(['U1'], UPDATED_AT, '1w');
+
+    expect(retrieve).toHaveBeenCalledWith({
+      items: [
+        { instanceId: { space: 'oee_ts_space', externalId: 'U1:quality' } },
+        { instanceId: { space: 'oee_ts_space', externalId: 'U1:performance' } },
+        { instanceId: { space: 'oee_ts_space', externalId: 'U1:availability' } },
+      ],
+      start: WEEK_START,
+      end: UPDATED_AT + 1,
+      aggregates: ['average', 'count'],
+      granularity: '1d',
+      limit: 9,
+      ignoreUnknownIds: true,
+    });
+  });
+
+  it.each([
+    { range: '1m', days: 30, granularity: '4h', coarse: '1d' },
+    { range: '1y', days: 365, granularity: '1d', coarse: '30d' },
+  ] as const)('uses $granularity and $coarse averages for the $range time frame', async ({ range, days, granularity, coarse }) => {
+    await service.getUnitPeriodStats(['U1'], UPDATED_AT, range);
+
+    const start = Date.UTC(2026, 9, 4) - days * 24 * 60 * 60 * 1000;
+    expect(retrieve).toHaveBeenCalledWith(expect.objectContaining({ start, granularity, aggregates: ['average'] }));
+    expect(retrieve).toHaveBeenCalledWith(
+      expect.objectContaining({ start, granularity: coarse, aggregates: ['average', 'count'] })
+    );
+  });
+
+  it('stays under 100 time series and 10 000 aggregates per request', async () => {
+    const units = Array.from({ length: 120 }, (_, index) => `U${index}`);
+
+    await service.getUnitPeriodStats(units, UPDATED_AT, '1w');
+
+    const calls = retrieve.mock.calls.map(([query]) => ({
+      items: query.items.length,
+      aggregates: query.items.length * (query.limit ?? 0),
+      granularity: query.granularity,
+    }));
+    // OEE: 182 hourly averages per unit, so 54 units per request. Components: 360 series, 100 per request.
+    expect(calls.filter((call) => call.granularity === '1h').map((call) => call.items)).toEqual([54, 54, 12]);
+    expect(calls.filter((call) => call.granularity === '1d').map((call) => call.items)).toEqual([100, 100, 100, 60]);
+    expect(calls.every((call) => call.items <= 100 && call.aggregates <= 10000)).toBe(true);
+  });
+
+  it('computes the mean OEE, the periods below the alert threshold and the weighted component means', async () => {
+    retrieve.mockImplementation((query) =>
+      Promise.resolve(
+        query.granularity === '1h'
+          ? [makeAggregates('U1:oee', [{ average: 0.9 }, { average: 0.5 }, { average: 0.4 }])]
+          : [
+              makeAggregates('U1:quality', [
+                { average: 1, count: 300 },
+                { average: 0.6, count: 100 },
+              ]),
+              makeAggregates('U1:performance', [{ average: 0.8, count: 10 }]),
+            ]
+      )
+    );
+
+    const [stats] = await service.getUnitPeriodStats(['U1'], UPDATED_AT, '1w');
+
+    expect(stats.externalId).toBe('U1');
+    expect(stats.meanOee).toBeCloseTo(0.6);
+    expect(stats.periods).toBe(3);
+    expect(stats.periodsBelowAlert).toBe(2);
+    expect(stats.quality).toBeCloseTo(0.9);
+    expect(stats.performance).toBeCloseTo(0.8);
+    expect(stats.availability).toBeNull();
+  });
+
+  it('returns empty statistics for a unit without datapoints, in the order of the request', async () => {
+    retrieve.mockImplementation((query) =>
+      Promise.resolve(query.granularity === '1h' ? [makeAggregates('U2:oee', [{ average: 0.8 }])] : [])
+    );
+
+    const stats = await service.getUnitPeriodStats(['U1', 'U2'], UPDATED_AT, '1w');
+
+    expect(stats).toEqual([
+      { externalId: 'U1', meanOee: null, periods: 0, periodsBelowAlert: 0, quality: null, performance: null, availability: null },
+      { externalId: 'U2', meanOee: 0.8, periods: 1, periodsBelowAlert: 0, quality: null, performance: null, availability: null },
+    ]);
+  });
+
+  it('rejects when CDF fails', async () => {
+    retrieve.mockRejectedValue(new Error('429'));
+
+    await expect(service.getUnitPeriodStats(['U1'], UPDATED_AT, '1w')).rejects.toThrow('429');
+  });
+});
+
+function makeAggregates(
+  externalId: string,
+  points: { average: number; count?: number }[]
+): Extract<RetrieveResponse, { isStep: boolean }[]>[number] {
+  return {
+    id: 1,
+    instanceId: { space: 'oee_ts_space', externalId },
+    isString: false,
+    isStep: false,
+    datapoints: points.map((point, index) => ({ timestamp: new Date(UPDATED_AT - index * 3600000), ...point })),
+  };
+}
+
 function makeAsset(externalId: string, name?: string): ListResponse['items'][number] {
   return {
     instanceType: 'node',

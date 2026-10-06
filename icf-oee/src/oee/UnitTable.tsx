@@ -1,10 +1,10 @@
 import { DataGrid } from '@cognite/aura/data-grid';
-import { IconChartLine } from '@tabler/icons-react';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useMemo } from 'react';
 
 import { formatDateTime, formatPercent } from './oeeFormat';
 import { OeeValue } from './OeeValue';
+import { SelectableName } from './SelectableName';
 import type { UnitOee } from './types';
 
 /** Lowest OEE first: the units that need attention are at the top. */
@@ -45,7 +45,7 @@ function buildColumns(selectedUnitId: string | null): ColumnDef<UnitOee>[] {
       accessorFn: (unit) => unit.name,
       size: 170,
       cell: ({ row }) => (
-        <UnitName name={row.original.name} isSelected={row.original.externalId === selectedUnitId} />
+        <SelectableName name={row.original.name} isSelected={row.original.externalId === selectedUnitId} />
       ),
     },
     { id: 'externalId', header: 'External ID', accessorFn: (unit) => unit.externalId, size: 150 },
@@ -79,22 +79,4 @@ function percentColumn(
     size,
     cell: ({ row }) => formatPercent(row.original[metric]),
   };
-}
-
-/** The unit name on one line; the row whose trend is charted is marked. */
-function UnitName({ name, isSelected }: { name: string; isSelected: boolean }) {
-  if (!isSelected) {
-    return (
-      <span className="block min-w-0 flex-1 truncate" title={name}>
-        {name}
-      </span>
-    );
-  }
-  return (
-    <span className="flex min-w-0 flex-1 items-center gap-2" title={name}>
-      <IconChartLine aria-hidden className="size-4 shrink-0" />
-      <span className="truncate font-medium">{name}</span>
-      <span className="sr-only">(selected)</span>
-    </span>
-  );
 }

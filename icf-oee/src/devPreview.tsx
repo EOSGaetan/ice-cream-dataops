@@ -60,6 +60,23 @@ const service: OeeService = {
       }))
     );
   },
+  getUnitPeriodStats: (unitIds) =>
+    Promise.resolve(
+      unitIds.map((externalId, index) => {
+        // The trailing number of the fake external id is the unit type: same type, similar figures.
+        const type = Number(externalId.slice(-3)) - 100;
+        const share = Math.max(0, 0.45 - type * 0.03 + (index % 7) * 0.01);
+        return {
+          externalId,
+          meanOee: 1 - share * 0.8,
+          periods: 160,
+          periodsBelowAlert: Math.round(share * 160),
+          quality: 1 - share * 0.3,
+          performance: 1 - share * 0.2,
+          availability: 1 - share * 0.4,
+        };
+      })
+    ),
 };
 
 const params = new URLSearchParams(window.location.search);

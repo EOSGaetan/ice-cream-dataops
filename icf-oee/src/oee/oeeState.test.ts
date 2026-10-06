@@ -6,11 +6,11 @@ describe(parseOeeState.name, () => {
   it('returns the default state when nothing was saved: the overview and the 1-week trend', () => {
     expect(parseOeeState(undefined)).toEqual(DEFAULT_OEE_STATE);
     expect(parseOeeState('')).toEqual(DEFAULT_OEE_STATE);
-    expect(DEFAULT_OEE_STATE).toEqual({ view: 'overview', siteId: null, unitId: null, range: '1w' });
+    expect(DEFAULT_OEE_STATE).toEqual({ view: 'overview', siteId: null, unitId: null, unitType: null, range: '1w' });
   });
 
   it('restores the view, the selected site and unit and the time frame', () => {
-    const saved = { view: 'site', siteId: 'oslo', unitId: 'OSPRPATA241', range: '1m' };
+    const saved = { view: 'units', siteId: 'oslo', unitId: 'OSPRPATA241', unitType: 'Aging Tank', range: '1m' };
 
     expect(parseOeeState(JSON.stringify(saved))).toEqual(saved);
   });
@@ -20,6 +20,7 @@ describe(parseOeeState.name, () => {
       view: 'overview',
       siteId: 'oslo',
       unitId: null,
+      unitType: null,
       range: '1w',
     });
   });
@@ -29,6 +30,7 @@ describe(parseOeeState.name, () => {
       view: 'site',
       siteId: 'oslo',
       unitId: 'OSPRPATA241',
+      unitType: null,
       range: '1w',
     });
   });
@@ -40,7 +42,7 @@ describe(parseOeeState.name, () => {
   it('ignores malformed or foreign state', () => {
     expect(parseOeeState('not json')).toEqual(DEFAULT_OEE_STATE);
     expect(parseOeeState('"text"')).toEqual(DEFAULT_OEE_STATE);
-    expect(parseOeeState(JSON.stringify({ siteId: 42, unitId: [], view: 'map', range: '5y' }))).toEqual(
+    expect(parseOeeState(JSON.stringify({ siteId: 42, unitId: [], unitType: 7, view: 'map', range: '5y' }))).toEqual(
       DEFAULT_OEE_STATE
     );
   });

@@ -1,12 +1,13 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { makeOeeService, makeOeeWrapper, SITES, TREND, UNITS, UPDATED_AT } from '../__mocks__/oee';
+import { makeOeeService, makeOeeWrapper, SITES, TREND, UNIT_STATS, UNITS, UPDATED_AT } from '../__mocks__/oee';
 import type { FakeOeeService } from '../__mocks__/oee';
 
 import { useOeeViewModel } from './useOeeViewModel';
 
 const OSLO = JSON.stringify({ view: 'site', siteId: 'oslo' });
+const UNIT_TYPES = JSON.stringify({ view: 'units' });
 const OSLO_BALANCE_TANK = JSON.stringify({ view: 'site', siteId: 'oslo', unitId: 'OSPRPATA241' });
 
 describe(useOeeViewModel.name, () => {
@@ -104,7 +105,7 @@ describe(useOeeViewModel.name, () => {
       expect(result.current.selectedSiteId).toBe('oslo');
       expect(result.current.overview.items).toEqual([]);
       expect(syncState).toHaveBeenCalledWith(
-        JSON.stringify({ view: 'site', siteId: 'oslo', unitId: null, range: '1w' })
+        JSON.stringify({ view: 'site', siteId: 'oslo', unitId: null, unitType: null, range: '1w' })
       );
     });
 
@@ -118,7 +119,128 @@ describe(useOeeViewModel.name, () => {
 
       expect(result.current.view).toBe('overview');
       expect(syncState).toHaveBeenLastCalledWith(
-        JSON.stringify({ view: 'overview', siteId: 'oslo', unitId: 'OSPRPATA241', range: '1w' })
+        JSON.stringify({ view: 'overview', siteId: 'oslo', unitId: 'OSPRPATA241', unitType: null, range: '1w' })
+      );
+    });
+  });
+
+  describe('unit types', () => {
+    it('is loading until the units of every site and their statistics arrive', async () => {
+      service.getUnitPeriodStats.mockReturnValue(new Promise(() => undefined));
+
+      const { result } = renderHook(() => useOeeViewModel(), {
+        wrapper: makeOeeWrapper({ service, syncState, initialState: UNIT_TYPES }),
+      });
+
+      expect(result.current.unitTypes).toEqual({ items: [], isLoading: true, error: null });
+      await waitFor(() => expect(service.getUnitPeriodStats).toHaveBeenCalled());
+      expect(result.current.unitTypes.isLoading).toBe(true);
+    });
+
+    it('asks for the statistics of every unit over the time frame that ends at the latest value', async () => {
+      const { result } = renderHook(() => useOeeViewModel(), {
+        wrapper: makeOeeWrapper({ service, syncState, initialState: UNIT_TYPES }),
+      });
+
+      await waitFor(() => expect(result.current.unitTypes.items).toHaveLength(2));
+      expect(service.listUnits).toHaveBeenCalledWith('houston');
+      expect(service.listUnits).toHaveBeenCalledWith('oslo');
+      expect(service.getUnitPeriodStats).toHaveBeenCalledWith(
+        ['OSPRPATA241', 'OSPRFICHSP463', 'OSPRPATA241', 'OSPRFICHSP463'],
+        UPDATED_AT,
+        '1w'
+      );
+    });
+
+    it('ranks the unit types of all sites: most time below the alert threshold first', async () => {
+      const { result } = renderHook(() => useOeeViewModel(), {
+        wrapper: makeOeeWrapper({ service, syncState, initialState: UNIT_TYPES }),
+      });
+
+      await waitFor(() => expect(result.current.unitTypes.items).toHaveLength(2));
+      const [first, second] = result.current.unitTypes.items;
+      expect(first.name).toBe('Chocolate Spray');
+      expect(first.belowAlertShare).toBeCloseTo(0.5);
+      expect(first.unitCount).toBe(2);
+      expect(first.siteCount).toBe(2);
+      expect(first.members.map((member) => member.stats)).toEqual([UNIT_STATS[1], UNIT_STATS[1]]);
+      expect(second.name).toBe('Balance Tank');
+      expect(second.meanOee).toBeCloseTo(0.8);
+      expect(result.current.unitTypes.isLoading).toBe(false);
+      expect(result.current.selectedUnitType).toBeNull();
+    });
+
+    it('reports an error of the statistics', async () => {
+      service.getUnitPeriodStats.mockRejectedValue(new Error('500'));
+
+      const { result } = renderHook(() => useOeeViewModel(), {
+        wrapper: makeOeeWrapper({ service, syncState, initialState: UNIT_TYPES }),
+      });
+
+      await waitFor(() =>
+        expect(result.current.unitTypes).toEqual({
+          items: [],
+          isLoading: false,
+          error: 'The unit statistics could not be loaded. 500',
+        })
+      );
+    });
+
+    it('reports an error of the units of a site', async () => {
+      service.listUnits.mockRejectedValue(new Error('429'));
+
+      const { result } = renderHook(() => useOeeViewModel(), {
+        wrapper: makeOeeWrapper({ service, syncState, initialState: UNIT_TYPES }),
+      });
+
+      await waitFor(() => expect(result.current.unitTypes.error).toBe('The unit statistics could not be loaded. 429'));
+      expect(result.current.unitTypes.isLoading).toBe(false);
+      expect(service.getUnitPeriodStats).not.toHaveBeenCalled();
+    });
+
+    it('selects a unit type and syncs the state to the host', async () => {
+      const { result } = renderHook(() => useOeeViewModel(), {
+        wrapper: makeOeeWrapper({ service, syncState, initialState: UNIT_TYPES }),
+      });
+      await waitFor(() => expect(result.current.unitTypes.items).toHaveLength(2));
+
+      act(() => result.current.selectUnitType('Balance Tank'));
+
+      expect(result.current.selectedUnitType?.name).toBe('Balance Tank');
+      expect(syncState).toHaveBeenCalledWith(
+        JSON.stringify({ view: 'units', siteId: null, unitId: null, unitType: 'Balance Tank', range: '1w' })
+      );
+    });
+
+    it('reloads the statistics when another time frame is selected', async () => {
+      const { result } = renderHook(() => useOeeViewModel(), {
+        wrapper: makeOeeWrapper({ service, syncState, initialState: UNIT_TYPES }),
+      });
+      await waitFor(() => expect(result.current.unitTypes.items).toHaveLength(2));
+
+      act(() => result.current.selectTrendRange('1m'));
+
+      await waitFor(() =>
+        expect(service.getUnitPeriodStats).toHaveBeenCalledWith(expect.any(Array), UPDATED_AT, '1m')
+      );
+    });
+
+    it('opens a unit of a type in the site tab', async () => {
+      const { result } = renderHook(() => useOeeViewModel(), {
+        wrapper: makeOeeWrapper({
+          service,
+          syncState,
+          initialState: JSON.stringify({ view: 'units', unitType: 'Balance Tank' }),
+        }),
+      });
+      await waitFor(() => expect(result.current.selectedUnitType?.name).toBe('Balance Tank'));
+
+      act(() => result.current.openUnit('oslo', 'OSPRPATA241'));
+
+      await waitFor(() => expect(result.current.selectedUnit).toEqual(UNITS[0]));
+      expect(result.current.view).toBe('site');
+      expect(syncState).toHaveBeenCalledWith(
+        JSON.stringify({ view: 'site', siteId: 'oslo', unitId: 'OSPRPATA241', unitType: 'Balance Tank', range: '1w' })
       );
     });
   });
@@ -135,7 +257,7 @@ describe(useOeeViewModel.name, () => {
       expect(service.listUnits).toHaveBeenCalledWith('oslo');
       expect(result.current.selectedSiteId).toBe('oslo');
       expect(syncState).toHaveBeenCalledWith(
-        JSON.stringify({ view: 'site', siteId: 'oslo', unitId: null, range: '1w' })
+        JSON.stringify({ view: 'site', siteId: 'oslo', unitId: null, unitType: null, range: '1w' })
       );
     });
 
@@ -160,7 +282,7 @@ describe(useOeeViewModel.name, () => {
       expect(service.getOeeTrend).toHaveBeenCalledWith('OSPRPATA241', UPDATED_AT, '1w');
       expect(result.current.selectedUnit).toEqual(UNITS[0]);
       expect(syncState).toHaveBeenCalledWith(
-        JSON.stringify({ view: 'site', siteId: 'oslo', unitId: 'OSPRPATA241', range: '1w' })
+        JSON.stringify({ view: 'site', siteId: 'oslo', unitId: 'OSPRPATA241', unitType: null, range: '1w' })
       );
     });
 
@@ -175,7 +297,7 @@ describe(useOeeViewModel.name, () => {
       await waitFor(() => expect(service.getOeeTrend).toHaveBeenCalledWith('OSPRPATA241', UPDATED_AT, '1y'));
       expect(result.current.trendRange).toBe('1y');
       expect(syncState).toHaveBeenLastCalledWith(
-        JSON.stringify({ view: 'site', siteId: 'oslo', unitId: 'OSPRPATA241', range: '1y' })
+        JSON.stringify({ view: 'site', siteId: 'oslo', unitId: 'OSPRPATA241', unitType: null, range: '1y' })
       );
     });
 
@@ -184,7 +306,7 @@ describe(useOeeViewModel.name, () => {
         wrapper: makeOeeWrapper({
           service,
           syncState,
-          initialState: JSON.stringify({ view: 'site', siteId: 'oslo', unitId: 'OSPRFICHSP463', range: '1m' }),
+          initialState: JSON.stringify({ view: 'site', siteId: 'oslo', unitId: 'OSPRFICHSP463', unitType: null, range: '1m' }),
         }),
       });
 
@@ -205,7 +327,7 @@ describe(useOeeViewModel.name, () => {
 
       await waitFor(() => expect(service.listUnits).toHaveBeenCalledWith('houston'));
       expect(syncState).toHaveBeenLastCalledWith(
-        JSON.stringify({ view: 'site', siteId: 'houston', unitId: null, range: '1w' })
+        JSON.stringify({ view: 'site', siteId: 'houston', unitId: null, unitType: null, range: '1w' })
       );
     });
 

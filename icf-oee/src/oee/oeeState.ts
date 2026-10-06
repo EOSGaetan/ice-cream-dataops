@@ -8,7 +8,9 @@ export type OeeState = {
   view: OeeView;
   siteId: string | null;
   unitId: string | null;
-  /** Time frame of the OEE trend. */
+  /** The unit type opened in the unit types tab: a unit name, such as "Aging Tank". */
+  unitType: string | null;
+  /** Time frame of the OEE trend and of the unit type statistics. */
   range: TrendRangeId;
 };
 
@@ -16,6 +18,7 @@ export const DEFAULT_OEE_STATE: OeeState = {
   view: 'overview',
   siteId: null,
   unitId: null,
+  unitType: null,
   range: DEFAULT_TREND_RANGE,
 };
 
@@ -42,12 +45,13 @@ export function parseOeeState(serialized: string | undefined): OeeState {
     if (typeof parsed !== 'object' || parsed === null) return DEFAULT_OEE_STATE;
     const siteId = 'siteId' in parsed && typeof parsed.siteId === 'string' ? parsed.siteId : null;
     const unitId = 'unitId' in parsed && typeof parsed.unitId === 'string' ? parsed.unitId : null;
+    const unitType = 'unitType' in parsed && typeof parsed.unitType === 'string' ? parsed.unitType : null;
     const range = 'range' in parsed && isTrendRangeId(parsed.range) ? parsed.range : DEFAULT_TREND_RANGE;
     // Links saved before the tabs existed have no view: a selected site means the site tab.
     const fallbackView: OeeView = siteId === null ? 'overview' : 'site';
     const view = 'view' in parsed && isOeeView(parsed.view) ? parsed.view : fallbackView;
     // A unit only makes sense inside a site.
-    return { view, siteId, unitId: siteId === null ? null : unitId, range };
+    return { view, siteId, unitId: siteId === null ? null : unitId, unitType, range };
   } catch {
     return DEFAULT_OEE_STATE;
   }

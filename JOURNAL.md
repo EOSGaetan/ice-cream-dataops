@@ -710,6 +710,9 @@ commitée ni déployée.**
   **Fusion affiche toujours le bandeau « Only you can run this app. Have a certified builder
   sign it to share it with others » : sans signature, l'app active n'est utilisable que par
   moi.** La prochaine modification passera par une 0.0.4.
+  Clone GitHub : 0.0.2 poussée par moi (`b5002c6`), puis 0.0.3 (`e715d52`, 2026-10-06 16:35).
+  Contrôle après le push : `origin/main` au même commit que le clone, arbre propre,
+  357 fichiers suivis, aucun fichier `.env`, `app.json` en 0.0.3.
   - Courbe : raccourcis de période **1W / 1M / 1Y** (7, 30, 365 jours ; moyennes horaires,
     par 4 h, journalières), toujours calés sur la dernière valeur de l'unité. Les données
     n'existent que depuis fin septembre 2026 : 1M et 1Y montrent la même quinzaine de jours.
@@ -729,6 +732,33 @@ commitée ni déployée.**
     les marqueurs sont verts ; la couleur par moyenne distingue peu les sites.
   - Piège : un anneau de terres qui traverse l'antiméridien (Tchoukotka) dessine une bande sur
     toute la carte ; le script coupe le tracé à cet endroit.
+- **Version 0.0.4 écrite le 2026-10-06 : onglet « Unit types »** (statistiques par type d'unité,
+  tous sites confondus, pour voir quel type pose le plus de problèmes dans le monde).
+  - Un type = un nom d'unité : les 628 unités portent 30 noms, chacun présent dans les 10 sites.
+  - Sur la période choisie (1W / 1M / 1Y, la même que la courbe), calée sur la dernière valeur
+    de toutes les unités : part du temps sous 70 %, OEE moyen (moyennes de toutes les unités du
+    type mises ensemble), quality / performance / availability moyens, site le plus bas.
+  - Écran : classement en barres des 10 types les plus problématiques, tableau des 30 types
+    (tri par temps sous 70 % décroissant), et pour le type choisi la liste de ses unités site
+    par site ; un clic sur une unité l'ouvre dans l'onglet Site. Le type choisi est gardé dans
+    l'adresse.
+  - Requêtes : `timeseries/data/list` avec `instanceId`, 100 séries et 10 000 agrégats au plus
+    par requête. OEE à la granularité de la courbe (pour compter les périodes sous 70 %),
+    quality / performance / availability en moyennes `1d` (ou `30d` pour 1Y) pondérées par
+    `count`. Vérifié en lecture seule sur le test : 31 requêtes et environ 1 s pour 1W et 1M,
+    43 requêtes pour 1Y ; les 628 unités ont des statistiques. L'historique du test ne couvre
+    qu'environ 8 jours.
+  - Contrôles : 121 tests, couverture 96 % des lignes, lint et build OK (JavaScript 1,13 Mo).
+    Rendu contrôlé sur la page de prévisualisation locale.
+  - **Déployée en test puis activée le 2026-10-06** après ma validation du brouillon :
+    `0.0.4 is now PUBLISHED`, `ACTIVE`, `Superseded 0.0.3 → PUBLISHED`. Commitée dans le dépôt
+    de l'app (`90acb43`) ; copiée dans le clone GitHub avec `git add`, commit et push à faire
+    par moi. Rendu vérifié dans Fusion test avec les vraies données : 30 types, 628 unités ;
+    sur 1W les plus problématiques sont Hardening Tunnel (20,9 % du temps sous 70 %), Finished
+    goods (20,3 %) et Chocolate Spray (20,2 %).
+  - Point faible : dans Fusion l'onglet met environ 20 à 25 s à s'afficher la première fois
+    (une quarantaine de requêtes pour les unités, puis une trentaine pour les statistiques),
+    contre 1 s pour les seules statistiques hors navigateur. Cause non cherchée.
 - Clone GitHub `C:\dev\cdf-bootcamp-33` : `icf-oee/` y était resté au squelette d'origine ;
   remis à niveau le 2026-10-06 par l'assistant (copie + `git add`), avec
   `flows_app_developer.Group.yaml` et ce journal. Commit et push à faire par moi.
