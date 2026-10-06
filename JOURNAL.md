@@ -407,6 +407,11 @@ pour porter le projet local sur GitHub est maintenant la **phase 13 du mode opé
   `git ls-tree`). Identité git réglée dans le clone seulement (adresse `noreply` GitHub).
 - Partage pour l'évaluation : dépôt privé, donc inviter le formateur dans Settings >
   Collaborators (il aura un accès en écriture, seul rôle possible sur un dépôt personnel).
+- `report/` retiré du dépôt le 2026-10-06 (commit `327d7fe`, `git rm -r --cached` puis
+  `report/` dans `.gitignore`) : il reste en local dans les deux dossiers et dans l'historique
+  git. Même traitement pour `.claude/` à la racine (simple `launch.json` de l'aperçu local).
+- Deux dossiers désormais : l'original (complet, avec secrets, builds, deck, rapport) et
+  `C:\dev\cdf-bootcamp-33` (seul relié à GitHub). Reporter à la main toute modification.
 - Reste ensuite : environnements `test`/`prod`, protection de `main`, workflows (phase 13).
 - Mémo Word mis à jour et régénéré le 2026-10-06 (9 pages, annexes toujours sur la dernière) :
   nouvelle section 9 « Path to the GitHub repository » (grille, 5 étapes, 4 points d'attention,

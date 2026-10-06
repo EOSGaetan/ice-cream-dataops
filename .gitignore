@@ -235,3 +235,5 @@ node_modules/
 !icf-oee/src/lib/
 # Report and memo stay local, not part of the evaluated repository
 report/
+# Claude Code local preview config (root only)
+/.claude/
