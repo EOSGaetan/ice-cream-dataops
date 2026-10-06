@@ -362,6 +362,13 @@ et sur la prod. Livrables ajoutés à ma demande :
 - Reste hors technique : quiz de fin de bootcamp (70 %) ; question à l'instructeur sur
   l'évaluation du dépôt GitHub. Le deck du bootcamp est à la racine
   (`2025- Cognite Data Fusion Bootcamp v3.pdf`) : utile pour préparer le quiz.
+- **Quiz réussi le 2026-10-06 : 6 / 6 au deuxième essai** (4 / 6 au premier, seuil 5 / 6), sur
+  learn.cognite.com, cours « Cognite Data Fusion Practitioner L-100 Assessment ». Six
+  questions : CDF groups configurés, types de ressources utilisés, outil de création des
+  groups, fichiers d'une transformation, fournisseur d'identité, objets créés dans Entra.
+  Les deux ratées au premier essai : fichiers d'une transformation, et objets créés dans
+  Entra. Reste dans ce cours : la page « Prerequisites for CDF Bootcamp certification » et
+  l'étape « Submit your bootcamp work ».
 
 **Dépôt GitHub : documenté le 2026-10-06, pas exécuté.** À ma demande, la marche à suivre
 pour porter le projet local sur GitHub est maintenant la **phase 13 du mode opératoire**
@@ -410,9 +417,48 @@ pour porter le projet local sur GitHub est maintenant la **phase 13 du mode opé
 - `report/` retiré du dépôt le 2026-10-06 (commit `327d7fe`, `git rm -r --cached` puis
   `report/` dans `.gitignore`) : il reste en local dans les deux dossiers et dans l'historique
   git. Même traitement pour `.claude/` à la racine (simple `launch.json` de l'aperçu local).
+- `README.md` rédigé (pipeline, arborescence, prérequis, commandes de déploiement, contrôles,
+  app) et fichier parasite `httpsdocs.cognite.commcp.txt` retiré : commit `37aaeae`, dépôt à
+  319 fichiers. `AGENTS.md` décrit maintenant le dépôt et le clone.
 - Deux dossiers désormais : l'original (complet, avec secrets, builds, deck, rapport) et
   `C:\dev\cdf-bootcamp-33` (seul relié à GitHub). Reporter à la main toute modification.
-- Reste ensuite : environnements `test`/`prod`, protection de `main`, workflows (phase 13).
+- **Dépôt passé en public par moi le 2026-10-06.** Visibles de tous : `AGENTS.md` (les 10
+  Object IDs Entra, mentions TotalEnergies/CLOV), `JOURNAL.md`, et dans l'historique `report/`.
+  Aucun client ID, secret, tenant ID, e-mail ni identifiant Windows (contrôlé). À décider :
+  retirer `AGENTS.md` et `JOURNAL.md` du dépôt, voire réécrire l'historique.
+- **Environnement GitHub `prod` créé le 2026-10-06** par Claude dans le navigateur intégré
+  (après ma connexion à GitHub dans ce navigateur) : Required reviewers = `EOSGaetan`
+  (Prevent self-review décoché, contournement administrateur laissé coché par défaut),
+  déploiements limités à la branche `main`, 6 variables saisies (`CDF_CLUSTER`, `CDF_PROJECT`,
+  `LOGIN_FLOW` et les 3 `*_SOURCE_ID`, ces derniers après mon accord explicite). **À saisir
+  par moi** : `IDP_TENANT_ID`, `IDP_TOKEN_URL`, les 3 `*_CLIENT_ID`, et les 3 secrets
+  `*_CLIENT_SECRET`. Claude ne saisit aucun secret, et le mode automatique refuse qu'il fasse
+  transiter une valeur de `.env.prod` vers le navigateur, même par le presse-papiers sans
+  l'afficher. Dans la fenêtre « Add variable », le champ Name n'a pas le focus à l'ouverture :
+  cliquer dedans avant de taper.
+- **Environnement `prod` complet le 2026-10-06** : j'ai saisi les 5 variables restantes et les
+  3 secrets. Contrôle de Claude sur la page (noms et tests vrai/faux, aucune valeur affichée) :
+  11 variables, 3 secrets, aucun nom manquant ni en trop, pas de guillemet ni d'espace, les 7
+  identifiants ont la forme d'un GUID, le token URL contient le tenant ID et finit par
+  `/oauth2/v2.0/token`, les 3 client IDs sont distincts. Capture de la question 2 à faire.
+- **Environnement GitHub `test` créé le 2026-10-06** par Claude : pas de relecteur, pas de
+  restriction de branche (le contrôle à blanc tournera depuis les branches de pull request),
+  6 variables saisies (`CDF_CLUSTER`, `CDF_PROJECT` = `cdf-bootcamp-33-test`, `LOGIN_FLOW`,
+  les 3 `*_SOURCE_ID` de test). **À saisir par moi depuis `.env`** : `IDP_TENANT_ID`,
+  `IDP_TOKEN_URL`, les 3 `*_CLIENT_ID` et les 3 secrets `*_CLIENT_SECRET`.
+- **Environnement `test` complet le 2026-10-06** : j'ai saisi les 5 variables restantes et les
+  3 secrets. Même contrôle que pour `prod` (noms et tests vrai/faux) : 11 variables, 3 secrets,
+  rien de manquant ni en trop, formats corrects. Contrôle croisé : tenant ID et token URL
+  identiques entre `test` et `prod`, les 3 client IDs différents. Seule une exécution réelle
+  d'un workflow prouvera que client IDs et secrets sont les bons.
+- **Formulaire « Submit your bootcamp work » (partie 2, notée à la main) envoyé par moi le
+  2026-10-06**, avec la capture de l'environnement `prod`. Claude n'a vu que la question 2 ;
+  les questions 1, 3 et 4 ne sont pas consignées ici.
+- Non fait à la date de l'envoi : protection de `main`, fichiers de workflow, aucune GitHub
+  Action exécutée (phase 13, étapes 6 à 8). À reprendre seulement si le formateur le demande.
+- À décider après la note : dépôt public à repasser en privé ou à nettoyer (`AGENTS.md` et ses
+  Object IDs, `JOURNAL.md`, historique), et suppression des secrets des environnements GitHub
+  s'ils ne servent plus.
 - Mémo Word mis à jour et régénéré le 2026-10-06 (9 pages, annexes toujours sur la dernière) :
   nouvelle section 9 « Path to the GitHub repository » (grille, 5 étapes, 4 points d'attention,
   mention « documented, not executed »), anciennes sections 9 et 10 renumérotées 10 et 11,
@@ -486,7 +532,8 @@ régénéré, 16 pages, 14 figures). Rien n'a été modifié dans CDF : lecture 
   arrière-plan à se redessiner ; certaines pages défilent dans un bloc interne limité à la
   hauteur de la fenêtre, il faut alors lever son `overflow`.
 - Reste à faire, hors documentation : vérifier la visibilité du canvas pour la formatrice,
-  confirmer la condition Cognite Academy, le quiz, et GitHub (phase 13).
+  confirmer la condition Cognite Academy, le quiz (fait le 2026-10-06, 6 / 6), et GitHub
+  (phase 13).
 
 **Suite : jour 4 dans l'interface du projet prod.** (fait, voir ci-dessus) Charts (graphique `OSPRPATA241`,
 calcul `charts_oee`, alerte `oee_monitoring`) : instructions données, à confirmer par moi.
@@ -523,20 +570,47 @@ sans rapport avec le Toolkit. Doc : https://docs.cognite.com/cdf/flows/.
   de dépôt distant) et posé un `.github/workflows/ci.yml` inactif. La racine du projet n'est
   toujours pas un dépôt git.
 - `npm install` (708 paquets, `node_modules` dans le dossier synchronisé), `npm test` 4/4,
-  `npm run build` OK. L'app est encore la page d'accueil du modèle : aucune vue OEE écrite.
+  `npm run build` OK.
 - Serveur local : `npm run dev` dans `icf-oee/` (ou `.claude/launch.json` à la racine pour
   l'assistant), port 3001, HTTPS avec certificat auto-signé. Adresse dans Fusion :
   `https://cog-enablement-bootcamp.fusion.cognite.com/cdf-bootcamp-33-test/custom-apps/development/icf-oee/3001?cluster=westeurope-1.cognitedata.com&workspace=flows`
 - Constaté dans Fusion test : le menu « Custom apps » existe et la page affiche « icf-oee in
-  Development Mode ». Le cadre vers `https://localhost:3001` reste vide dans le navigateur
-  intégré : certificat non reconnu (`ERR_BLOCKED_BY_CLIENT`, page d'erreur sur localhost).
-- **À faire par moi :** soit `mkcert` + `npx @cognite/cli@latest apps setup-https` (droits
-  admin, une fois), soit dans mon navigateur ouvrir `https://localhost:3001`, « Avancé →
-  Continuer », puis recharger l'onglet Fusion (à refaire à chaque redémarrage du serveur).
+  Development Mode ».
+- Certificat local réglé le 2026-10-06 : j'ai lancé moi-même
+  `$env:Path = "$env:USERPROFILE\Downloads;$env:Path"; npx @cognite/cli@latest apps setup-https`
+  (`mkcert` 1.4.4 était dans `Downloads`). L'autorité `mkcert` est dans les racines de
+  confiance de mon compte Windows, le certificat dans `%USERPROFILE%\.cognite-cli\certificates\mkcert` ;
+  `https://localhost:3001` s'ouvre sans avertissement.
+- **Limite du navigateur intégré de l'assistant :** il bloque le cadre `localhost` placé dans la
+  page Fusion (`ERR_BLOCKED_BY_CLIENT`), même avec un certificat reconnu. L'app en mode local
+  se regarde donc dans Chrome ou Edge, pas dans le navigateur intégré.
 - Droits : le group `data_developer` n'a pas `appHostingAcl` et le Toolkit 0.6.53 ne connaît
   pas cette capability ; il faudra un group créé à la main dans Fusion pour déployer
   (`apphosting:read`, `write`, `run`). Publier demande en plus une signature de développeur
   (certification « builder » Cognite) : viser le mode local et un brouillon en test.
+
+**Première version écrite le 2026-10-06 (périmètre validé par moi), pas encore commitée.**
+- Écran : choix d'un site, tableau des unités du site (dernier OEE, quality, performance,
+  availability, heure de la dernière valeur), clic sur une ligne = courbe d'OEE horaire sur
+  les 7 jours qui finissent à la dernière valeur, avec résumé en texte. Site et unité choisis
+  sont gardés dans l'adresse (`syncInternalState`). Lecture seule, textes en anglais.
+- Requêtes (validées sur le test) : sites = `CogniteAsset` de `icapi_dm_space` sans `parent` ;
+  assets d'un site = `root` égal au site (le filtre `prefix` sur `path` de la function Python
+  n'est pas typé dans le SDK JavaScript) ; dernières valeurs par
+  `timeseries/data/latest` avec `instanceId` `<asset>:oee|quality|performance|availability`
+  dans `oee_ts_space` et `ignoreUnknownIds` (100 séries au plus par requête) ; les unités sont
+  les assets pour lesquels une série existe.
+- Code dans `icf-oee/src/oee/` (service, état, view model, écrans) et `SPEC.md` rempli.
+  Paquets ajoutés pour les composants Aura : `recharts`, `@tanstack/react-table`,
+  `@tanstack/react-virtual`.
+- Contrôles : 50 tests (`npm test`), couverture 94 % des lignes, `npm run lint` et
+  `npm run build` OK (un avertissement : paquet JavaScript de 991 Ko). Le vrai code du service,
+  lancé en lecture seule sur le projet test avec le compte du Toolkit : 10 sites, **628 unités**
+  (34 à 98 par site), courbe de 137 points pour `OSPRPATA241`.
+- **Non vérifié par l'assistant : l'affichage dans Fusion** (navigateur intégré bloqué, voir
+  plus haut). À regarder par moi dans Chrome ou Edge.
+- Si le test DOM d'un tableau Aura n'affiche aucune ligne : le `DataGrid` est virtualisé, il
+  faut simuler `offsetHeight`/`offsetWidth` (voir `OeePage.test.tsx`).
 
 ## À prévoir pour le passage en prod
 
@@ -558,3 +632,8 @@ sans rapport avec le Toolkit. Doc : https://docs.cognite.com/cdf/flows/.
 
 - Le projet test contient déjà 26 data sets, dont `ds_icapi` et `ds_uc_oee` : est-ce normal ?
 - La doc évalue un dépôt GitHub ; on travaille en local. Comment cette partie est-elle notée ?
+  **Réponse trouvée le 2026-10-06** dans le formulaire « Submit your bootcamp work » (partie 2,
+  notée à la main, 4 questions) : par captures d'écran. La question 2 demande la configuration
+  de l'environnement GitHub `prod` (Settings > Environments > prod). Les trois autres questions
+  restent à relever. La page Environments est disponible sur le dépôt privé ; à vérifier à la
+  création si « Required reviewers » y est proposé.

@@ -188,8 +188,10 @@ a folder where the npm package `docx` is installed); its Appendix C reuses the s
 `report/img/`. `scripts/build_report.py` generates the HTML page.
 
 Status on 2026-10-06: the four bootcamp days are done in test and prod, Charts and Canvas
-included. What is left is the post-bootcamp quiz and the GitHub-repository question for the
-instructor. In Fusion you can drive the UI for me through the app's built-in browser once I
+included. The repository is public, its GitHub environments `test` and `prod` are configured
+(11 variables and 3 secrets each; `prod` has a required reviewer and deploys from `main`
+only), and I submitted the manually graded part of the final assessment. Not done: branch
+protection on `main` and the GitHub Actions workflows; see JOURNAL.md for the open points. In Fusion you can drive the UI for me through the app's built-in browser once I
 have signed in there myself.
 
 `JOURNAL.md` is the handover file. Read it at the start of a session and update it
