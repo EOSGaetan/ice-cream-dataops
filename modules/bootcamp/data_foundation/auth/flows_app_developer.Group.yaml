@@ -1,0 +1,7 @@
+name: flows_app_developer
+sourceId: {{ data_developer_source_id }}
+capabilities:
+  - appHostingAcl:
+      actions: [READ, WRITE, RUN]
+      scope:
+        all: {}

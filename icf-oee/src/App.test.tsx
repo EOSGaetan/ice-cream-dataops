@@ -1,10 +1,11 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { HostAppAPI, ConnectToHostAppResult } from '@cognite/app-sdk';
 import { CogniteClient } from '@cognite/sdk';
-import type { ComponentProps } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { render, screen, waitFor } from '@testing-library/react';
+import type { ComponentProps, ReactNode } from 'react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { makeOeeService } from './__mocks__/oee';
 import App from './App';
 
 type AppDeps = NonNullable<ComponentProps<typeof App>['deps']>;
@@ -15,10 +16,6 @@ function makeApi(): AppApi {
   return {
     syncInternalState: vi.fn<HostAppAPI['syncInternalState']>(() => Promise.resolve(true)),
   };
-}
-
-function makeConnectedFn(api: AppApi = makeApi()) {
-  return vi.fn(() => Promise.resolve({ api }));
 }
 
 function makeDeps(): AppDeps {
@@ -44,57 +41,63 @@ function makeLoadingDeps(): AppDeps {
   };
 }
 
+function renderApp(props: ComponentProps<typeof App>) {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const wrapper = ({ children }: { children: ReactNode }) => (
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  );
+  return render(<App {...props} />, { wrapper });
+}
+
 describe('App', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   it('renders loading state', () => {
-    render(<App deps={makeLoadingDeps()} connectToHostApp={() => new Promise<never>(() => undefined)} />);
+    renderApp({ deps: makeLoadingDeps(), connectToHostApp: () => new Promise<never>(() => undefined) });
+
     expect(screen.getByText('Loading project...')).toBeInTheDocument();
   });
 
-  it('renders splash with deployment targets and checklist copy', async () => {
-    render(<App deps={makeDeps()} connectToHostApp={makeConnectedFn()} />);
-    await waitFor(() => expect(screen.getByText('Welcome to Flows custom apps')).toBeInTheDocument());
-    expect(screen.getByText('App deployment checklist')).toBeInTheDocument();
-    expect(screen.getByText('Plan')).toBeInTheDocument();
-    expect(screen.getByText('Explore')).toBeInTheDocument();
-    expect(screen.getByText('Deploy')).toBeInTheDocument();
-    expect(screen.getByText('Support')).toBeInTheDocument();
-    expect(screen.getByText('Help & feedback')).toBeInTheDocument();
-    expect(screen.getByText('Your app will deploy to')).toBeInTheDocument();
-    expect(screen.getByText('org')).toBeInTheDocument();
-    expect(screen.getByText('and project')).toBeInTheDocument();
-    expect(screen.getByText('cog-enablement-bootcamp')).toBeInTheDocument();
-    expect(screen.getByText('cdf-bootcamp-33-test')).toBeInTheDocument();
-    expect(screen.getAllByText(/SPEC\.md/).length).toBeGreaterThan(0);
-    expect(screen.getByText(/apps deploy --interactive/)).toBeInTheDocument();
+  it('renders the connection error when the Fusion host cannot be reached', async () => {
+    renderApp({ deps: makeDeps(), connectToHostApp: () => Promise.reject(new Error('no host')) });
+
+    await waitFor(() => expect(screen.getByText('Failed to connect to Fusion host')).toBeInTheDocument());
   });
 
-  it('syncs internal state when the open step changes', async () => {
-    const api = makeApi();
-    render(<App deps={makeDeps()} connectToHostApp={makeConnectedFn(api)} />);
-    await waitFor(() => expect(screen.getByText('App deployment checklist')).toBeInTheDocument());
+  it('renders the OEE page with the sites read through the service', async () => {
+    const service = makeOeeService();
+    const createService = vi.fn(() => service);
 
-    await userEvent.click(screen.getByText('Explore'));
+    renderApp({
+      deps: makeDeps(),
+      connectToHostApp: () => Promise.resolve({ api: makeApi() }),
+      createService,
+    });
 
-    expect(api.syncInternalState).toHaveBeenCalledWith(
-      JSON.stringify({ openStep: 'Explore' })
-    );
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Ice Cream Factory OEE' })).toBeInTheDocument());
+    expect(screen.getByText('No site selected')).toBeInTheDocument();
+    expect(createService).toHaveBeenCalledWith(expect.any(CogniteClient));
+    expect(service.listSites).toHaveBeenCalled();
   });
 
-  it('restores the open step from initial state', async () => {
-    const api = makeApi();
-    render(<App
-      deps={makeDeps()}
-      connectToHostApp={() => Promise.resolve({ api, initialState: JSON.stringify({ openStep: 'Deploy' }) })}
-    />);
-    await waitFor(() => expect(screen.getByText('App deployment checklist')).toBeInTheDocument());
+  it('restores the selected site and unit from the initial state', async () => {
+    const service = makeOeeService();
+
+    renderApp({
+      deps: makeDeps(),
+      connectToHostApp: () =>
+        Promise.resolve({
+          api: makeApi(),
+          initialState: JSON.stringify({ siteId: 'oslo', unitId: 'OSPRPATA241' }),
+        }),
+      createService: () => service,
+    });
 
     await waitFor(() =>
-      expect(screen.getByRole('button', { name: /deploy/i })).toHaveAttribute('aria-expanded', 'true')
+      expect(screen.getByRole('heading', { name: 'OEE trend of Balance Tank' })).toBeInTheDocument()
     );
-    expect(screen.getByRole('button', { name: /plan/i })).toHaveAttribute('aria-expanded', 'false');
+    expect(service.listUnits).toHaveBeenCalledWith('oslo');
   });
 });

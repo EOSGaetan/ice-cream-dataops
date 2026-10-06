@@ -612,6 +612,101 @@ sans rapport avec le Toolkit. Doc : https://docs.cognite.com/cdf/flows/.
 - Si le test DOM d'un tableau Aura n'affiche aucune ligne : le `DataGrid` est virtualisé, il
   faut simuler `offsetHeight`/`offsetWidth` (voir `OeePage.test.tsx`).
 
+**Affichage validé par moi dans Fusion test, puis déploiement préparé (2026-10-06).**
+- Commits dans le dépôt de `icf-oee/`, branche `feat/oee-first-version` (pas sur `master`) :
+  `bd71621` (première version) et `1bfef9d` (cible prod ajoutée à `app.json`, 2e entrée de
+  `deployments`). Identité passée par `-c user.name/-c user.email`, celle du commit initial.
+- Droits : aucun des 6 CDF groups du projet test ne porte `appHostingAcl`. Nouveau fichier
+  `modules/bootcamp/data_foundation/auth/flows_app_developer.Group.yaml` (même `sourceId` que
+  `data_developer`, `appHostingAcl` READ/WRITE/RUN, scope all). Le Toolkit 0.6.53 ne connaît
+  pas cette capability : le build l'accepte avec un avertissement et la garde dans le fichier
+  construit ; dry-run test = 1 « all-scoped group » à créer, le reste inchangé (hors faux
+  écarts habituels).
+- `cdf deploy` test fait par moi : group `flows_app_developer` créé, l'API a accepté
+  `appHostingAcl` (relu dans le projet : READ/WRITE/RUN, scope all, 7 groups au total).
+- Build prod fait dans `build_prod/`. Dry-run prod lancé par moi : 1 group à créer,
+  0 suppression, faux écarts habituels. **Le vrai `cdf deploy` prod reste à lancer.**
+- **Déploiement de l'app : échec à la connexion**, 3 fois (2 en test, 1 en prod) :
+  `Failed to fetch OpenID configuration from https://auth.cognite.com`. Cause, vue par un
+  diagnostic dans mon terminal : `UNABLE_TO_GET_ISSUER_CERT_LOCALLY`, Node ne reconnaît pas le
+  certificat re-signé par Zscaler (même cause que `CERTIFICATE_VERIFY_FAILED` côté Python).
+  **Solution : `$env:NODE_USE_SYSTEM_CA = '1'` dans le terminal avant la commande** (Node 24
+  utilise alors le magasin de certificats Windows, la vérification TLS reste active).
+  Confirmé : la même requête passe ensuite. Rien n'a donc encore été déployé côté app.
+- **App déployée en test (2026-10-06), version 0.0.1, brouillon (DRAFT) non signé**, avec
+  `$env:NODE_USE_SYSTEM_CA = '1'` puis `npm --prefix icf-oee run deploy -- -d cdf-bootcamp-33-test`
+  (connexion par le navigateur, port local 3000). Adresse :
+  `https://cog-enablement-bootcamp.fusion.cognite.com/cdf-bootcamp-33-test/custom-apps/app/icf-oee?cluster=westeurope-1.cognitedata.com&customAppVersion=0.0.1&workspace=flows`
+  Le paquet envoyé est gardé dans `icf-oee/.cognite-bundles/icf-oee-0.0.1.zip` (hors git).
+- `cdf deploy` prod fait par moi : group `flows_app_developer` créé (1 créé, 0 supprimé).
+- App en prod : je dis l'avoir déployée ; dans le terminal lu par l'assistant, la commande
+  était encore sur la question « A bundle for v0.0.1 already exists » (réponse attendue :
+  « Deploy the existing bundle without rebuilding »). **À confirmer** par l'ouverture de
+  l'adresse ci-dessus avec `cdf-bootcamp-33-prod`.
+- **Le navigateur intégré de l'assistant affiche l'app déployée** (servie par
+  `*.apps.westeurope-1.cogniteappsdata.com`) ; seul le mode local (`localhost`) y est bloqué.
+  Pour qu'il contrôle un changement visuel, il faut donc redéployer en test.
+- Publier pour tous en prod exige la signature de développeur (certification « builder ») et
+  la certification de l'app par Cognite. Une version déjà envoyée se remplace tant qu'elle est
+  en brouillon ; pour une nouvelle version, changer `versionTag` dans `app.json`.
+- Défauts visuels relevés sur la 0.0.1 : barre de défilement horizontale de la page (tableau
+  plus large que l'écran), graphique qui n'occupe pas la largeur de sa carte, courbe lissée
+  trompeuse, aucune mise en évidence des OEE bas ni de la ligne choisie, courbe hors écran
+  après un clic. À traiter dans la prochaine version.
+
+**Version 0.0.2 écrite le 2026-10-06 (quatre points validés par moi + logo), pas encore
+commitée ni déployée.**
+- Entreprise fictive : **Full Icecreamergies**. Logo fourni par moi, détouré (fond
+  transparent, 116 × 256, 43 Ko) dans `icf-oee/src/assets/logo.png`, affiché dans l'en-tête.
+- Quatre tuiles par site : OEE moyen, nombre d'unités, unités sous 70 %, unité la plus basse.
+- Tableau : OEE en pastille rouge sous 70 % (seuil d'alerte du bootcamp) et orange sous 85 %
+  (choix de l'app), tri par OEE croissant par défaut, tri par colonne au clic sur l'en-tête,
+  première colonne figée, ligne choisie marquée d'une icône.
+- Mise en page : tableau (2/3) et courbe (1/3) côte à côte à partir de 1024 px ; courbe en
+  segments droits, ligne pointillée à 70 %, résumé en texte sous le graphique (avec le nombre
+  d'heures sous 70 %). Plus de défilement horizontal de la page.
+- `versionTag` passé à `0.0.2` dans `app.json` ; `SPEC.md` mis à jour (FR-008 à FR-011).
+- Contrôles : 61 tests, lint et build OK.
+- **Page de prévisualisation locale** pour contrôler le visuel sans Fusion :
+  `https://localhost:3001/dev-preview.html` (données factices, `src/devPreview.tsx`, hors
+  build). Le navigateur intégré de l'assistant l'affiche. Vérifié à 1440 px par mesures :
+  aucune barre horizontale (page et tableau), 4 tuiles en ligne, cartes côte à côte.
+  Piège : les captures du navigateur intégré se dérèglent après un `resize_window` ou un
+  `scale` ; se fier alors aux mesures du DOM.
+- Piège Aura : dans le `DataGrid`, une colonne avec `cell` n'est plus tronquée ni mise sur une
+  ligne automatiquement ; soit rendre un `span` avec `truncate`, soit s'en passer (`accessorFn`
+  qui renvoie le texte).
+- **0.0.2 déployée en test le 2026-10-06 (brouillon)**, à ma demande par l'assistant : commande
+  tapée dans mon terminal, connexion faite par moi dans le navigateur. Rendu contrôlé dans
+  Fusion avec les vraies données (Oslo : OEE du site 91,5 %, 34 unités, logo, tuiles, pastilles).
+  Reste une petite barre horizontale à l'intérieur du tableau quand le menu de Fusion réduit
+  la largeur. Pas encore déployée en prod, pas encore commitée.
+- **Certificat Zscaler réglé pour de bon côté app** : `node-options=--use-system-ca` dans
+  `icf-oee/.npmrc`. Tous les scripts npm de l'app (`npm run deploy`, etc.) utilisent le magasin
+  de certificats Windows, quel que soit le terminal ; plus besoin de `$env:NODE_USE_SYSTEM_CA`.
+  Cause de l'échec précédent : la variable avait été posée dans un terminal et la commande
+  lancée dans un autre (chaque bouton « Run » ouvre son propre terminal). Un `npx` lancé à la
+  main, hors `npm run`, n'en profite pas.
+- Pour déployer : `npm --prefix icf-oee run deploy -- -d cdf-bootcamp-33-test` (ou `-prod`).
+- **0.0.2 commitée** dans le dépôt de `icf-oee/` (branche `feat/oee-first-version`, commits
+  `a5cc891`, `380e134`, `7520d52` du 2026-10-06 15:55, arbre propre).
+- **App visible dans l'onglet « Custom apps » du projet test depuis le 2026-10-06** :
+  `npm --prefix icf-oee run activate -- -d cdf-bootcamp-33-test` (tapée par l'assistant dans mon
+  terminal, connexion faite par moi) a répondu `icf-oee @ 0.0.2 is now PUBLISHED` puis
+  `ACTIVE`. Avant, la page disait « No apps available… activate an existing one ».
+  **Contrairement à la doc publique, ce tenant n'a exigé aucune signature** (ni développeur ni
+  Cognite) pour publier en test. Non essayé en prod.
+- Conséquences : une version publiée est verrouillée, toute modification passe par un nouveau
+  `versionTag` (0.0.3), `deploy` puis `activate`. Retirer l'app de l'onglet :
+  `npx @cognite/cli@latest apps deactivate` (non essayé).
+- Prod : 0.0.2 ni déployée ni activée. Commandes : `npm --prefix icf-oee run deploy --
+  -d cdf-bootcamp-33-prod` puis `npm --prefix icf-oee run activate -- -d cdf-bootcamp-33-prod`.
+- Clone GitHub `C:\dev\cdf-bootcamp-33` : `icf-oee/` y était resté au squelette d'origine ;
+  remis à niveau le 2026-10-06 par l'assistant (copie + `git add`), avec
+  `flows_app_developer.Group.yaml` et ce journal. Commit et push à faire par moi.
+- Voir l'app sur les données de prod sans rien déployer : même adresse de développement en
+  remplaçant `cdf-bootcamp-33-test` par `cdf-bootcamp-33-prod` (serveur local démarré).
+
 ## À prévoir pour le passage en prod
 
 - [ ] Créer `config.prod.yaml` (copie de `config.test.yaml`, `name: prod`,
