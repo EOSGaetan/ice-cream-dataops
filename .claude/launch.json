@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "icf-oee",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "icf-oee", "run", "dev"],
+      "port": 3001,
+      "url": "https://localhost:3001"
+    }
+  ]
+}

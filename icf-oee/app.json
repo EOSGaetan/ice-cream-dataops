@@ -1,0 +1,16 @@
+{
+  "name": "Ice Cream Factory OEE",
+  "description": "OEE by site and unit for the CDF Bootcamp Ice Cream Factory",
+  "externalId": "icf-oee",
+  "versionTag": "0.0.1",
+  "infra": "appsApi",
+  "deployments": [
+    {
+      "org": "cog-enablement-bootcamp",
+      "project": "cdf-bootcamp-33-test",
+      "baseUrl": "https://westeurope-1.cognitedata.com",
+      "deployClientId": "",
+      "deploySecretName": "COG_ENABLEMENT_BOOTCAMP_CDF_BOOTCAMP_33_TEST_WESTEUROPE_1"
+    }
+  ]
+}
