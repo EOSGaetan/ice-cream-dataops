@@ -1,11 +1,11 @@
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@cognite/aura/components/hover-card';
 
 import { formatPercent } from './oeeFormat';
-import { siteMapLevel } from './oeeKpi';
+import { siteOeeLevel } from './oeeKpi';
 import type { OeeLevel } from './oeeKpi';
+import type { SiteOverview } from './oeeRegions';
 import { getSiteCoordinates, MAP_VIEW_BOX, toMapPosition } from './siteLocations';
 import { SiteLowestUnits } from './SiteLowestUnits';
-import type { SiteOverview } from './useOeeViewModel';
 import { WORLD_LAND_PATH } from './worldMap';
 
 /** Data colours: the marker of a site shows the level of its mean OEE. */
@@ -67,7 +67,7 @@ function SiteMarker({ overview, onOpenSite }: SiteMarkerProps) {
   // A site without known coordinates is still listed in the table below the map.
   if (coordinates === null) return null;
   const { left, top } = toMapPosition(coordinates);
-  const level = siteMapLevel(summary?.meanOee);
+  const level = siteOeeLevel(summary?.meanOee);
 
   return (
     <HoverCard openDelay={80} closeDelay={80}>

@@ -4,7 +4,20 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { makeOeeService, makeOeeWrapper, SITES, TREND, UNIT_STATS, UNITS, UPDATED_AT } from '../__mocks__/oee';
 import type { FakeOeeService } from '../__mocks__/oee';
 
-import { useOeeViewModel } from './useOeeViewModel';
+import { useOeeSelection } from './useOeeSelection';
+import { useSiteDetailViewModel } from './useSiteDetailViewModel';
+import { useSitesOverviewViewModel } from './useSitesOverviewViewModel';
+import { useUnitTypesViewModel } from './useUnitTypesViewModel';
+
+/** The selection and the view models of the three tabs together, as the page uses them. */
+function useOeeViewModel() {
+  return {
+    ...useOeeSelection(),
+    ...useSitesOverviewViewModel(),
+    ...useUnitTypesViewModel(),
+    ...useSiteDetailViewModel(),
+  };
+}
 
 const OSLO = JSON.stringify({ view: 'site', siteId: 'oslo' });
 const UNIT_TYPES = JSON.stringify({ view: 'units' });

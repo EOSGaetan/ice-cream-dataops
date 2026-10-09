@@ -4,21 +4,19 @@ import logoUrl from '../assets/logo.png';
 
 import { ExportStorageProvider } from './ExportStorageProvider';
 import { ExportView } from './ExportView';
-import { ErrorMessage } from './OeeStates';
 import { ReportStorageProvider } from './ReportStorageProvider';
 import { SiteDetail } from './SiteDetail';
 import { SitesOverview } from './SitesOverview';
 import { COMPANY_NAME, isOeeView } from './types';
 import { UnitTypesView } from './UnitTypesView';
-import { useOeeViewModel } from './useOeeViewModel';
+import { useOeeSelection } from './useOeeSelection';
 import { WeeklyReportView } from './WeeklyReportView';
 
 /** A finger needs a larger target than a mouse pointer. */
 const TOUCH_TAB = 'pointer-coarse:h-11 pointer-coarse:px-3';
 
 export function OeePage() {
-  const viewModel = useOeeViewModel();
-  const { view, selectView, sites, overview, openSite } = viewModel;
+  const { view, selectView } = useOeeSelection();
 
   return (
     <ExportStorageProvider>
@@ -54,20 +52,19 @@ export function OeePage() {
 
           <TabsPanel value="overview">
             <div className="pt-6">
-              <SitesOverview overview={overview} onOpenSite={openSite} />
+              <SitesOverview />
             </div>
           </TabsPanel>
 
           <TabsPanel value="units">
             <div className="pt-6">
-              <UnitTypesView {...viewModel} />
+              <UnitTypesView />
             </div>
           </TabsPanel>
 
           <TabsPanel value="site">
-            <div className="flex flex-col gap-6 pt-6">
-              {sites.error !== null && <ErrorMessage message={sites.error} />}
-              <SiteDetail {...viewModel} />
+            <div className="pt-6">
+              <SiteDetail />
             </div>
           </TabsPanel>
 

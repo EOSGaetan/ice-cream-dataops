@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 
 import type { SiteSummary } from './oeeKpi';
 import { OeeValue } from './OeeValue';
+import { SiteOeeValue } from './SiteOeeValue';
 
 type SiteKpiTilesProps = {
   summary: SiteSummary;
@@ -14,7 +15,7 @@ export function SiteKpiTiles({ summary }: SiteKpiTilesProps) {
   return (
     <section aria-label="Site summary" className="grid grid-cols-12 gap-4">
       <Tile label="Site OEE" hint="Mean of the latest OEE of the units">
-        <OeeValue ratio={meanOee} />
+        <SiteOeeValue ratio={meanOee} />
       </Tile>
       <Tile label="Units" hint="With OEE time series">
         {unitCount}

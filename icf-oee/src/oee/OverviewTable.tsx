@@ -2,10 +2,10 @@ import { DataGrid } from '@cognite/aura/data-grid';
 import type { ColumnDef } from '@tanstack/react-table';
 
 import { useTableHeights } from './oeeDeps';
+import type { SiteOverview } from './oeeRegions';
 import { OeeValue } from './OeeValue';
 import { SiteOeeValue } from './SiteOeeValue';
 import type { UnitOee } from './types';
-import type { SiteOverview } from './useOeeViewModel';
 
 /** Lowest site OEE first. */
 const DEFAULT_SORTING = [{ id: 'siteOee', desc: false }];

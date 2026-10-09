@@ -93,10 +93,12 @@
   4-hour averages) and 1Y (365 days, daily averages), all ending at the latest OEE datapoint.
 - FR-013: System MUST offer an Overview tab with a world map of the sites: one marker per
   site, coloured by the mean of the latest OEE of its units with the colour code of the map:
-  red below 80%, orange from 80% to below 90%, green from 90%. The site OEE in the hover card
-  and in the table under the map follows the same code, applied to the value as it is shown
-  (one decimal): a site shown as "80.0%" is not below 80%. The thresholds of the units
-  (FR-010) are unchanged, including the unit values of that table.
+  red below 80%, orange from 80% to below 90%, green from 90%. The OEE of a whole site follows
+  the same code everywhere: the hover card, the table under the map, the Site OEE tile of the
+  Site tab, and in the weekly report the overall mean and the table of the sites (on screen
+  and in the downloaded file). The code applies to the value as it is shown (one decimal): a
+  site shown as "80.0%" is not below 80%. The thresholds of the units and of the unit types
+  (FR-010) are unchanged.
 - FR-014: System MUST show, when a site marker is hovered, the site OEE and the three units
   with the lowest latest OEE, and MUST show the same figures for every site in a table below
   the map, lowest site OEE first.
@@ -192,6 +194,9 @@
   sent by the app. The week is 7 rolling days, not a calendar week; when it ends on the day
   of the latest value, that last day is not complete.
 - With five tabs the tab bar is wider than a phone: it scrolls inside its own frame.
+- The identifiers of the data model (spaces, view, properties, naming of the time series) are
+  in `src/config/model.ts` only. The properties of an asset instance are parsed with Zod
+  where they enter the app (`src/oee/schema.ts`): an unexpected shape shows as a read error.
 - The export reads at most 100 time series and 10 000 averages per request; a period longer
   than 10 000 steps is cut in windows.
 - A unit type is a unit name: the 628 units carry 30 names, each present in the 10 sites.

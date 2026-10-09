@@ -9,7 +9,8 @@ import { getTrendRange } from './types';
 import { UnitTypeDetail } from './UnitTypeDetail';
 import type { UnitTypeStats } from './unitTypes';
 import { UnitTypesTable } from './UnitTypesTable';
-import type { OeeViewModel } from './useOeeViewModel';
+import { useOeeSelection } from './useOeeSelection';
+import { useUnitTypesViewModel } from './useUnitTypesViewModel';
 
 // The chart library is the heaviest part of the app: it is loaded when a chart is first shown.
 const UnitTypesChart = lazy(() => import('./UnitTypesChart').then((module) => ({ default: module.UnitTypesChart })));
@@ -17,27 +18,10 @@ const UnitTypesChart = lazy(() => import('./UnitTypesChart').then((module) => ({
 /** How many unit types the ranking chart shows. */
 const CHART_TYPE_COUNT = 10;
 
-type UnitTypesViewProps = Pick<
-  OeeViewModel,
-  | 'unitTypes'
-  | 'isLoadingUnitTypeDetails'
-  | 'selectedUnitType'
-  | 'selectUnitType'
-  | 'openUnit'
-  | 'trendRange'
-  | 'selectTrendRange'
->;
-
 /** The unit types tab: which kind of unit causes the most problems worldwide. */
-export function UnitTypesView({
-  unitTypes,
-  isLoadingUnitTypeDetails,
-  selectedUnitType,
-  selectUnitType,
-  openUnit,
-  trendRange,
-  selectTrendRange,
-}: UnitTypesViewProps) {
+export function UnitTypesView() {
+  const { unitTypes, isLoadingUnitTypeDetails, selectedUnitType } = useUnitTypesViewModel();
+  const { selectUnitType, openUnit, trendRange, selectTrendRange } = useOeeSelection();
   const range = getTrendRange(trendRange);
 
   return (

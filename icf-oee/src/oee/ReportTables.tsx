@@ -1,14 +1,21 @@
 import { DataGrid } from '@cognite/aura/data-grid';
 import type { ColumnDef } from '@tanstack/react-table';
+import type { ComponentType } from 'react';
 
 import { useTableHeights } from './oeeDeps';
 import { formatPercent } from './oeeFormat';
 import { OeeValue } from './OeeValue';
+import { SiteOeeValue } from './SiteOeeValue';
 import { formatChange } from './weeklyReport';
 import type { ReportFigures, ReportSiteRow, ReportTypeRow, ReportUnitRow } from './weeklyReport';
 
-/** The four figures every table of the report shows for its rows. */
-function figureColumns<Row extends { figures: ReportFigures }>(): ColumnDef<Row>[] {
+/**
+ * The four figures every table of the report shows for its rows. `MeanOee` draws the mean OEE:
+ * a site and a unit do not have the same colour code.
+ */
+function figureColumns<Row extends { figures: ReportFigures }>(
+  MeanOee: ComponentType<{ ratio: number | null }>
+): ColumnDef<Row>[] {
   return [
     {
       id: 'meanOee',
@@ -16,7 +23,7 @@ function figureColumns<Row extends { figures: ReportFigures }>(): ColumnDef<Row>
       accessorFn: (row) => row.figures.meanOee ?? undefined,
       sortUndefined: 'last',
       size: 100,
-      cell: ({ row }) => <OeeValue ratio={row.original.figures.meanOee} />,
+      cell: ({ row }) => <MeanOee ratio={row.original.figures.meanOee} />,
     },
     {
       id: 'previous',
@@ -48,7 +55,7 @@ function figureColumns<Row extends { figures: ReportFigures }>(): ColumnDef<Row>
 const SITE_COLUMNS: ColumnDef<ReportSiteRow>[] = [
   { id: 'site', header: 'Site', accessorFn: (row) => row.site.name, size: 140 },
   { id: 'units', header: 'Units', accessorFn: (row) => row.unitCount, size: 70 },
-  ...figureColumns<ReportSiteRow>(),
+  ...figureColumns<ReportSiteRow>(SiteOeeValue),
   {
     id: 'lowestUnit',
     header: 'Lowest unit',
@@ -61,14 +68,14 @@ const SITE_COLUMNS: ColumnDef<ReportSiteRow>[] = [
 const TYPE_COLUMNS: ColumnDef<ReportTypeRow>[] = [
   { id: 'name', header: 'Unit type', accessorFn: (row) => row.name, size: 200 },
   { id: 'units', header: 'Units', accessorFn: (row) => row.unitCount, size: 70 },
-  ...figureColumns<ReportTypeRow>(),
+  ...figureColumns<ReportTypeRow>(OeeValue),
 ];
 
 const UNIT_COLUMNS: ColumnDef<ReportUnitRow>[] = [
   { id: 'site', header: 'Site', accessorFn: (row) => row.site.name, size: 130 },
   { id: 'unit', header: 'Unit', accessorFn: (row) => row.unit.name, size: 190 },
   { id: 'externalId', header: 'External ID', accessorFn: (row) => row.unit.externalId, size: 150 },
-  ...figureColumns<ReportUnitRow>(),
+  ...figureColumns<ReportUnitRow>(OeeValue),
 ];
 
 const PINNED_FIRST = ['site'];

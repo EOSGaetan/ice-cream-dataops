@@ -199,7 +199,7 @@ describe(buildReportHtml.name, () => {
 
   it('has the summary, the sites, the unit types and the units', () => {
     expect(html).toContain('<h2>Summary</h2>');
-    expect(html).toContain('<td>75.7%</td><td>70.0%</td><td>+5.7 pts</td>');
+    expect(html).toContain('<td class="alert">75.7% (below 80%)</td><td>70.0%</td><td>+5.7 pts</td>');
     expect(html).toContain('<td>4 of 5</td>');
     expect(html).toContain('<td>Hours of the week with OEE values</td><td>41.7%</td>');
     expect(html).toContain('<h2>Sites, lowest mean OEE first</h2>');
@@ -207,6 +207,12 @@ describe(buildReportHtml.name, () => {
     expect(html).toContain('<h2>The 2 unit types with the most time below 70%</h2>');
     expect(html).toContain('<h2>The 4 units with the lowest mean OEE</h2>');
     expect(html).toContain('<td>O-MIX</td>');
+  });
+
+  it('marks a site below 80% and leaves a site from 80% unmarked', () => {
+    // Oslo: 70.0% over the week; Houston: 83.3%.
+    expect(html).toContain('<td>Oslo</td><td>2</td><td class="alert">70.0% (below 80%)</td>');
+    expect(html).toContain('<td>Houston</td><td>3</td><td>83.3%</td>');
   });
 
   it('marks an OEE below the alert threshold in text and not only in colour', () => {

@@ -11,42 +11,23 @@ import { TrendRangeControl } from './TrendRangeControl';
 import { getTrendRange } from './types';
 import type { TrendPoint, TrendRange, TrendRangeId, UnitOee } from './types';
 import { UnitTable } from './UnitTable';
-import type { OeeViewModel } from './useOeeViewModel';
+import { useOeeSelection } from './useOeeSelection';
+import { useSiteDetailViewModel } from './useSiteDetailViewModel';
 
 // The chart library is the heaviest part of the app: it is loaded when a chart is first shown.
 const OeeTrendChart = lazy(() => import('./OeeTrendChart').then((module) => ({ default: module.OeeTrendChart })));
 
-type SiteDetailProps = Pick<
-  OeeViewModel,
-  | 'sites'
-  | 'selectedSiteId'
-  | 'selectSite'
-  | 'units'
-  | 'selectedUnit'
-  | 'selectUnit'
-  | 'trendRange'
-  | 'selectTrendRange'
-  | 'trend'
->;
-
 /** The site tab: the units of one site and the OEE trend of the selected unit. */
-export function SiteDetail({
-  sites,
-  selectedSiteId,
-  selectSite,
-  units,
-  selectedUnit,
-  selectUnit,
-  trendRange,
-  selectTrendRange,
-  trend,
-}: SiteDetailProps) {
+export function SiteDetail() {
+  const { sites, units, selectedUnit, trend } = useSiteDetailViewModel();
+  const { selectedSiteId, selectSite, selectUnit, trendRange, selectTrendRange } = useOeeSelection();
   const selectedSite = sites.items.find((site) => site.externalId === selectedSiteId);
   const hasUnits = selectedSiteId !== null && !units.isLoading && units.error === null && units.items.length > 0;
   const range = getTrendRange(trendRange);
 
   return (
     <div className="flex flex-col gap-6">
+      {sites.error !== null && <ErrorMessage message={sites.error} />}
       <SiteSelect sites={sites.items} selectedSiteId={selectedSiteId} isLoading={sites.isLoading} onSelect={selectSite} />
 
       {hasUnits && <SiteKpiTiles summary={summarizeSite(units.items)} />}

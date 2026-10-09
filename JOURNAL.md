@@ -940,7 +940,42 @@ commitée ni déployée.**
     `0.0.9 is now PUBLISHED`, `ACTIVE`, `Superseded 0.0.8 → PUBLISHED`. Commitée dans le dépôt
     de l'app (`6ccbff6`, 8 fichiers). Pas de déploiement en prod. Clone GitHub
     `C:\dev\cdf-bootcamp-33` préparé (copie de `icf-oee/` et de ce journal, fichiers
-    indexés) : **commit et push à faire par moi**.
+    indexés) ; commit et push faits par moi le 2026-10-09 (`94d8350` ; contrôle après le
+    push : `origin/main` au même commit, arbre propre, 405 fichiers, aucun `.env`).
+- **Version 0.0.10 écrite le 2026-10-09** (à ma demande : « fixe tous les points » restés
+  ouverts).
+  - Seuils d'un site : la tuile « Site OEE » de l'onglet Site, et dans le rapport
+    hebdomadaire la moyenne d'ensemble et le tableau des sites (à l'écran et dans le fichier),
+    suivent maintenant le code 80 / 90. Un site a donc le même code couleur partout. Les
+    unités et les types d'unités gardent 70 % et 85 %.
+  - Écarts avec la page « architecture » de la doc Flows, corrigés :
+    - identifiants du modèle de données regroupés dans `icf-oee/src/config/model.ts` ;
+    - propriétés des assets validées avec Zod à leur entrée dans l'app
+      (`src/oee/schema.ts`, version légère `zod/mini` pour ne pas grossir le bundle) ;
+      vérifié en lecture seule sur le test : les 1021 assets passent, mêmes 628 unités ;
+    - le gros hook unique est découpé en quatre hooks à but unique (`useOeeSelection`,
+      `useSitesOverviewViewModel`, `useUnitTypesViewModel`, `useSiteDetailViewModel`).
+    Non traités, car hors de la liste : état partagé en contextes React plutôt qu'en Zustand,
+    dossiers à plat, quatre styles en ligne dans la carte.
+  - Revue de code n°3 (`reviews/code-review/feedback-round-3/`), faite avec la procédure
+    officielle (contrôles téléchargés le jour même) : **0 bloquant**, 3 « à corriger », 5
+    mineurs. Revue de design n°2 (`reviews/design-review/feedback-round-2/`) : moyenne
+    **4,1**. Ce sont des auto-revues, pas des revues de Cognite.
+  - Contrôles : 263 tests, couverture 97,2 % des lignes, lint et build OK (JavaScript
+    principal 788 ko).
+  - Compte GitHub : le clone `C:\dev\cdf-bootcamp-33` est réglé pour utiliser Git Credential
+    Manager avec le compte `EOSGaetan` (réglage local au clone, fait par l'assistant à ma
+    demande). Un simple `git push` doit suffire ; à confirmer au prochain push.
+  - Signature : **non réglée, ne peut pas l'être par l'assistant**. Aucune clé de signature
+    sur ce poste (`keys list` : « No signing identities found »). Il faut ma certification
+    de builder Flows, puis `npx @cognite/cli@latest keys generate --interactive` et
+    l'enregistrement de la clé par le support Cognite (formulaire Zendesk), et le « Dev
+    status » du projet test, à demander par le propriétaire du projet.
+  - **Déployée en test puis activée le 2026-10-09** après ma validation du brouillon :
+    `0.0.10 is now PUBLISHED`, `ACTIVE`, `Superseded 0.0.9 → PUBLISHED`. Commitée dans le
+    dépôt de l'app : `251cb92` (code) et `c53b5bc` (rapports de revue). Pas de déploiement en
+    prod. Clone GitHub `C:\dev\cdf-bootcamp-33` préparé (copie de `icf-oee/` et de ce journal,
+    fichiers indexés) : **commit et push à faire par moi**.
 - Clone GitHub `C:\dev\cdf-bootcamp-33` : `icf-oee/` y était resté au squelette d'origine ;
   remis à niveau le 2026-10-06 par l'assistant (copie + `git add`), avec
   `flows_app_developer.Group.yaml` et ce journal. Commit et push à faire par moi.

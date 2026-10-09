@@ -1,6 +1,6 @@
+import type { SiteOverview } from './oeeRegions';
 import { OeeValue } from './OeeValue';
 import { SiteOeeValue } from './SiteOeeValue';
-import type { SiteOverview } from './useOeeViewModel';
 
 type SiteLowestUnitsProps = {
   overview: SiteOverview;

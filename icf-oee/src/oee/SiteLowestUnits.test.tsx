@@ -4,8 +4,8 @@ import { describe, expect, it } from 'vitest';
 import { SITES, UNITS } from '../__mocks__/oee';
 
 import { summarizeSite } from './oeeKpi';
+import type { SiteOverview } from './oeeRegions';
 import { SiteLowestUnits } from './SiteLowestUnits';
-import type { SiteOverview } from './useOeeViewModel';
 
 const OSLO: SiteOverview = {
   site: SITES[1],

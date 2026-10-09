@@ -1,7 +1,7 @@
 import { Badge } from '@cognite/aura/components/badge';
 
 import { formatPercent } from './oeeFormat';
-import { siteMapLevel } from './oeeKpi';
+import { siteOeeLevel } from './oeeKpi';
 
 type SiteOeeValueProps = {
   ratio: number | null;
@@ -13,7 +13,7 @@ type SiteOeeValueProps = {
  */
 export function SiteOeeValue({ ratio }: SiteOeeValueProps) {
   const text = formatPercent(ratio);
-  const level = siteMapLevel(ratio);
+  const level = siteOeeLevel(ratio);
 
   if (level === 'critical') {
     return (

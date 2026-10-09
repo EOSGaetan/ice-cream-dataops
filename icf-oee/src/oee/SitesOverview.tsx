@@ -4,15 +4,14 @@ import { FULL_CARD_DESCRIPTION, STACKED_CARD_HEADER } from './cardLayout';
 import { Empty, ErrorMessage, Loading } from './OeeStates';
 import { OverviewTable } from './OverviewTable';
 import { SitesMap } from './SitesMap';
-import type { DataRegion, SiteOverview } from './useOeeViewModel';
-
-type SitesOverviewProps = {
-  overview: DataRegion<SiteOverview>;
-  onOpenSite: (siteId: string) => void;
-};
+import { useOeeSelection } from './useOeeSelection';
+import { useSitesOverviewViewModel } from './useSitesOverviewViewModel';
 
 /** The overview tab: every site on a map, and the same figures in a table. */
-export function SitesOverview({ overview, onOpenSite }: SitesOverviewProps) {
+export function SitesOverview() {
+  const { overview } = useSitesOverviewViewModel();
+  const { openSite: onOpenSite } = useOeeSelection();
+
   if (overview.isLoading) return <Loading label="Loading sites…" />;
   if (overview.error !== null) return <ErrorMessage message={overview.error} />;
   if (overview.items.length === 0) {

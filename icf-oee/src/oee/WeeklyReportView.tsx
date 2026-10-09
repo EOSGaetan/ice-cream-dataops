@@ -15,8 +15,8 @@ import type { ReactNode } from 'react';
 import { FULL_CARD_DESCRIPTION, STACKED_CARD_HEADER } from './cardLayout';
 import { formatPercent } from './oeeFormat';
 import { Empty, ErrorMessage, Loading } from './OeeStates';
-import { OeeValue } from './OeeValue';
 import { ReportSitesTable, ReportTypesTable, ReportUnitsTable } from './ReportTables';
+import { SiteOeeValue } from './SiteOeeValue';
 import { TOUCH_FIELD_CLASS } from './touchScreen';
 import { useWeeklyReportViewModel } from './useWeeklyReportViewModel';
 import { formatChange } from './weeklyReport';
@@ -120,7 +120,7 @@ function ReportPreview({ report }: { report: WeeklyReport }) {
           label="Mean OEE"
           hint={`${report.unitsWithData} of ${report.unitCount} units, ${formatPercent(report.coverage)} of the hours have values`}
         >
-          <OeeValue ratio={overall.meanOee} />
+          <SiteOeeValue ratio={overall.meanOee} />
         </Tile>
         <Tile label="Change" hint={`Week before: ${formatPercent(overall.previousMeanOee)}`}>
           {formatChange(overall.change)}

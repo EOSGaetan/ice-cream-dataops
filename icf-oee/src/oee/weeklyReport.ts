@@ -1,4 +1,5 @@
 import { formatDateTime, formatPercent } from './oeeFormat';
+import { siteOeeLevel } from './oeeKpi';
 import { COMPANY_NAME, DAY_MS, OEE_ALERT_THRESHOLD } from './types';
 import type { Site, SiteUnit, UnitOeeStats } from './types';
 
@@ -232,7 +233,7 @@ export function buildReportHtml(report: WeeklyReport, generatedAt: number): stri
     [
       [
         cell('Mean OEE'),
-        oeeCell(overall.meanOee),
+        siteOeeCell(overall.meanOee),
         percentCell(overall.previousMeanOee),
         cell(formatChange(overall.change)),
       ],
@@ -248,7 +249,7 @@ export function buildReportHtml(report: WeeklyReport, generatedAt: number): stri
     report.sites.map((row) => [
       cell(row.site.name),
       cell(String(row.unitCount)),
-      oeeCell(row.figures.meanOee),
+      siteOeeCell(row.figures.meanOee),
       percentCell(row.figures.previousMeanOee),
       cell(formatChange(row.figures.change)),
       percentCell(row.figures.belowAlertShare),
@@ -305,7 +306,8 @@ export function buildReportHtml(report: WeeklyReport, generatedAt: number): stri
 <p><strong>${escapeHtml(COMPANY_NAME)}</strong> – ${escapeHtml(report.scope)}</p>
 <p>Week from ${period.from} to ${period.to} (UTC, both days included), compared with ${previous.from} to ${previous.to}.</p>
 <p class="note">OEE = quality × performance × availability. Mean of the hourly averages of the units.
-A value in bold red is below the 70% alert threshold. Generated on ${escapeHtml(formatDateTime(generatedAt))}.</p>
+In bold red: the mean OEE of a site or of the whole selection below 80%, and the mean OEE of a unit
+or of a unit type below the 70% alert threshold. Generated on ${escapeHtml(formatDateTime(generatedAt))}.</p>
 <h2>Summary</h2>
 ${summary}
 <h2>Sites, lowest mean OEE first</h2>
@@ -334,6 +336,14 @@ function percentCell(ratio: number | null): Cell {
 function oeeCell(ratio: number | null): Cell {
   if (ratio !== null && ratio < OEE_ALERT_THRESHOLD) {
     return { html: `<td class="alert">${escapeHtml(formatPercent(ratio))} (below 70%)</td>` };
+  }
+  return percentCell(ratio);
+}
+
+/** The OEE of a whole site, or of the whole selection: marked when it is below 80%. */
+function siteOeeCell(ratio: number | null): Cell {
+  if (siteOeeLevel(ratio) === 'critical') {
+    return { html: `<td class="alert">${escapeHtml(formatPercent(ratio))} (below 80%)</td>` };
   }
   return percentCell(ratio);
 }
