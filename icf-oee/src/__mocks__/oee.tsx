@@ -7,6 +7,7 @@ import { OeeDepsContext } from '../oee/oeeDeps';
 import type { ExportSeries } from '../oee/oeeExport';
 import type { OeeService } from '../oee/oeeService';
 import { OeeStateProvider } from '../oee/OeeStateProvider';
+import { ReportStorageProvider } from '../oee/ReportStorageProvider';
 import type { Site, SiteUnit, TrendPoint, UnitOee, UnitPeriodStats } from '../oee/types';
 
 export const UPDATED_AT = Date.UTC(2026, 9, 4, 12, 0);
@@ -98,6 +99,16 @@ export function makeOeeService(): FakeOeeService {
         }))
       )
     ),
+    getUnitOeeStatsForPeriod: vi.fn<OeeService['getUnitOeeStatsForPeriod']>(() =>
+      Promise.resolve(
+        UNIT_STATS.map(({ externalId, meanOee, periods, periodsBelowAlert }) => ({
+          externalId,
+          meanOee,
+          periods,
+          periodsBelowAlert,
+        }))
+      )
+    ),
     getUnitComponentMeans: vi.fn<OeeService['getUnitComponentMeans']>(() =>
       Promise.resolve(
         UNIT_STATS.map(({ externalId, quality, performance, availability }) => ({
@@ -117,6 +128,7 @@ type OeeWrapperOptions = {
   syncState?: (serialized: string) => void;
   downloadFile?: (fileName: string, content: string) => void;
   isTouchScreen?: boolean;
+  now?: () => number;
   initialState?: string;
 };
 
@@ -126,17 +138,20 @@ export function makeOeeWrapper({
   syncState = () => undefined,
   downloadFile = () => undefined,
   isTouchScreen = false,
+  now = () => UPDATED_AT,
   initialState,
 }: OeeWrapperOptions): ComponentType<{ children: ReactNode }> {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  const deps = { service, syncState, downloadFile, isTouchScreen };
+  const deps = { service, syncState, downloadFile, isTouchScreen, now };
 
   return function OeeWrapper({ children }: { children: ReactNode }) {
     return (
       <QueryClientProvider client={queryClient}>
         <OeeDepsContext.Provider value={deps}>
           <OeeStateProvider initialState={initialState}>
-            <ExportStorageProvider>{children}</ExportStorageProvider>
+            <ExportStorageProvider>
+              <ReportStorageProvider>{children}</ReportStorageProvider>
+            </ExportStorageProvider>
           </OeeStateProvider>
         </OeeDepsContext.Provider>
       </QueryClientProvider>

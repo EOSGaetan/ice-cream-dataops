@@ -29,6 +29,7 @@ const TABS = [
     ready: 'OEE trend of Balance Tank',
   },
   { tab: 'export', state: JSON.stringify({ view: 'export' }), ready: 'Export to CSV' },
+  { tab: 'weekly report', state: JSON.stringify({ view: 'report' }), ready: 'Units with the lowest mean OEE' },
 ];
 
 describe('OeePage accessibility', () => {

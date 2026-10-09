@@ -4,7 +4,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import ReactDOM from 'react-dom/client';
 
-import { downloadCsvFile } from '../src/oee/downloadFile';
+import { downloadTextFile } from '../src/oee/downloadFile';
 import { OeeDepsContext } from '../src/oee/oeeDeps';
 import { getExportStep } from '../src/oee/oeeExport';
 import { OeePage } from '../src/oee/OeePage';
@@ -83,6 +83,21 @@ const service: OeeService = {
         };
       })
     ),
+  getUnitOeeStatsForPeriod: (unitIds, startMs) =>
+    Promise.resolve(
+      unitIds.map((externalId, index) => {
+        const type = Number(externalId.slice(-3)) - 100;
+        // The week before is a little worse, so the report shows a change.
+        const drift = startMs < END - 10 * 24 * 3600000 ? 0.03 : 0;
+        const share = Math.min(1, Math.max(0, 0.45 - type * 0.03 + (index % 7) * 0.01 + drift));
+        return {
+          externalId,
+          meanOee: 1 - share * 0.8,
+          periods: 168,
+          periodsBelowAlert: Math.round(share * 168),
+        };
+      })
+    ),
   getUnitComponentMeans: (unitIds) =>
     // Later than the ranking, to show the columns filling in afterwards.
     new Promise((resolve) => {
@@ -129,8 +144,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       value={{
         service,
         syncState: () => undefined,
-        downloadFile: downloadCsvFile,
+        downloadFile: downloadTextFile,
         isTouchScreen: detectTouchScreen(),
+        now: Date.now,
       }}
     >
       <OeeStateProvider initialState={initialState}>

@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { downloadCsvFile } from './downloadFile';
+import { downloadTextFile } from './downloadFile';
 
-describe(downloadCsvFile.name, () => {
+describe(downloadTextFile.name, () => {
   afterEach(() => {
     vi.restoreAllMocks();
     vi.useRealTimers();
@@ -21,7 +21,7 @@ describe(downloadCsvFile.name, () => {
       clicked.push({ download: this.download, href: this.href });
     });
 
-    downloadCsvFile('export.csv', 'a;b\r\n1;2\r\n');
+    downloadTextFile('export.csv', 'a;b\r\n1;2\r\n');
 
     expect(clicked).toEqual([{ download: 'export.csv', href: 'blob:test' }]);
     expect(blobs).toHaveLength(1);
@@ -34,5 +34,19 @@ describe(downloadCsvFile.name, () => {
     vi.runAllTimers();
 
     expect(revoke).toHaveBeenCalledWith('blob:test');
+  });
+
+  it('downloads a file whose name ends in .html as an HTML document, without byte order mark', () => {
+    const blobs: Blob[] = [];
+    vi.spyOn(URL, 'createObjectURL').mockImplementation((blob) => {
+      if (blob instanceof Blob) blobs.push(blob);
+      return 'blob:test';
+    });
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
+
+    downloadTextFile('report.HTML', '<!doctype html>');
+
+    expect(blobs[0].type).toBe('text/html;charset=utf-8');
+    expect(blobs[0].size).toBe('<!doctype html>'.length);
   });
 });

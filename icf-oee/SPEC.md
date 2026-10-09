@@ -17,6 +17,9 @@
    all sites, so that I can prioritise an improvement that pays off worldwide.
 4. As an engineer, I want to export the data I choose (which units, which figures, which
    period, which step) to a file, so that I can run my own analysis in Excel.
+5. As a performance engineer, I want a weekly report of the OEE of all sites or of one site,
+   compared with the week before, as a file I can print or send, so that I can share the
+   state of the week without rebuilding it by hand.
 
 ### Acceptance Scenarios
 
@@ -136,6 +139,21 @@
   failed.
 - FR-027: System MUST let the user cancel a running export: no further request is sent, no
   file is downloaded, and the page says so.
+- FR-028: System MUST offer a Weekly report tab for the 7 UTC days that end on a chosen day
+  (by default the day of the latest value), for all sites or one site, compared with the 7
+  days before.
+- FR-029: System MUST compute the report from the hourly OEE averages of the units: mean OEE,
+  change against the week before in percentage points, share of the hours below the 70%
+  alert threshold, number of units whose weekly mean is below 70%, and the share of the
+  hours of the week that have a value; then the sites (lowest mean first, with their lowest
+  unit), the 10 unit types with the most time below 70% and the 10 units with the lowest
+  mean OEE.
+- FR-030: System MUST show the report on screen and let the user download it as one HTML file
+  that needs nothing else (no script, no external resource), named after the scope and the
+  week, readable in any browser and printable to paper or PDF. Names from the project data
+  are escaped, and a value below 70% is marked in text, not by colour alone.
+- FR-031: System MUST say when the chosen week has no OEE value and MUST NOT offer the
+  download in that case.
 - FR-025: System MUST meet WCAG 2.2 level AA on the points an automated check can verify:
   text contrast of at least 4.5:1, zoom allowed, every control reachable and usable with the
   keyboard, and the OEE level (below 70%, below 85%) given in text and not by colour alone.
@@ -166,6 +184,12 @@
 - On the map, the markers of neighbouring European sites overlap; the table under the map
   gives the same action for every site.
 - The export choices are kept while the app is open but are not saved in the address.
+- The choices of the weekly report (site, last day) are kept the same way. The report reads
+  about 22 requests for all sites (two weeks of hourly averages of 628 units).
+- The weekly report is generated on request by the user: nothing is scheduled and nothing is
+  sent by the app. The week is 7 rolling days, not a calendar week; when it ends on the day
+  of the latest value, that last day is not complete.
+- With five tabs the tab bar is wider than a phone: it scrolls inside its own frame.
 - The export reads at most 100 time series and 10 000 averages per request; a period longer
   than 10 000 steps is cut in windows.
 - A unit type is a unit name: the 628 units carry 30 names, each present in the 10 sites.

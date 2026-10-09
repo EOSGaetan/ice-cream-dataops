@@ -12,6 +12,8 @@ export type OeeDeps = {
   downloadFile: (fileName: string, content: string) => void;
   /** The main pointer is a finger: the tables get taller rows. */
   isTouchScreen: boolean;
+  /** The current time, in milliseconds since epoch. */
+  now: () => number;
 };
 
 export const OeeDepsContext = createContext<OeeDeps | null>(null);

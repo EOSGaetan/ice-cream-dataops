@@ -890,7 +890,39 @@ commitée ni déployée.**
     `0.0.7 is now PUBLISHED`, `ACTIVE`, `Superseded 0.0.6 → PUBLISHED`. Commitée dans le dépôt
     de l'app : `4767181` (code couleur de la carte) et `7e54457` (fiche de l'app et revue de
     design). Pas de déploiement en prod. Clone GitHub `C:\dev\cdf-bootcamp-33` préparé (copie
-    de `icf-oee/` et de ce journal, fichiers indexés) : **commit et push à faire par moi**.
+    de `icf-oee/` et de ce journal, fichiers indexés) ; commit et push faits par moi le
+    2026-10-09 (`54f6d0d` ; contrôle après le push : `origin/main` au même commit, arbre
+    propre, 396 fichiers, aucun `.env`). Le réglage durable du compte GitHub dans le clone
+    n'est toujours pas fait : le push passe encore par la commande longue du piège 403.
+- **Version 0.0.8 écrite le 2026-10-09 : onglet « Weekly report »** (à ma demande : pouvoir
+  générer un rapport hebdomadaire).
+  - Choix : site (ou tous) et dernier jour de la semaine (par défaut le jour de la dernière
+    valeur). Le rapport couvre les 7 jours UTC qui finissent ce jour-là, comparés aux 7 jours
+    précédents. Ce sont 7 jours glissants, pas une semaine calendaire.
+  - Contenu : OEE moyen, variation en points par rapport à la semaine d'avant, part des heures
+    sous 70 %, nombre d'unités dont la moyenne de la semaine est sous 70 %, part des heures
+    qui ont une valeur ; puis les sites (du plus bas au plus haut, avec leur unité la plus
+    basse), les 10 types d'unités les plus longtemps sous 70 % et les 10 unités les plus
+    basses.
+  - Le rapport s'affiche à l'écran et se télécharge en **un fichier HTML autonome** (ni
+    script ni ressource externe), nommé d'après le périmètre et la semaine. Il s'ouvre dans
+    n'importe quel navigateur ; pour un PDF : imprimer, puis « Enregistrer au format PDF ».
+    Rien n'est planifié ni envoyé par l'app : c'est moi qui génère le rapport.
+  - Requêtes : moyennes horaires de l'OEE sur les deux semaines. Vérifié en lecture seule sur
+    le test avec le vrai code : 22 requêtes en 0,7 s pour les 628 unités ; les deux semaines
+    ont des valeurs. Constat sur les données du test au 2026-10-09 : la semaine en cours
+    n'a des valeurs que sur 73 heures au plus par unité (sur 168), et l'OEE moyen y est de
+    74,5 % contre 82,4 % la semaine d'avant.
+  - Avec cinq onglets, la barre d'onglets dépassait la largeur d'un téléphone : elle défile
+    maintenant dans son propre cadre.
+  - Contrôles : 255 tests, couverture 97,1 % des lignes, lint OK ; axe-core sans défaut sur
+    le nouvel onglet ; rendu contrôlé dans l'aperçu local (bureau et 375 px) ; fichier HTML
+    généré relu à l'écran.
+  - **Déployée en test puis activée le 2026-10-09** après ma validation du brouillon :
+    `0.0.8 is now PUBLISHED`, `ACTIVE`, `Superseded 0.0.7 → PUBLISHED`. Commitée dans le dépôt
+    de l'app (`7da256b`, 20 fichiers). Pas de déploiement en prod. Clone GitHub
+    `C:\dev\cdf-bootcamp-33` préparé (copie de `icf-oee/` et de ce journal, fichiers
+    indexés) : **commit et push à faire par moi**.
 - Clone GitHub `C:\dev\cdf-bootcamp-33` : `icf-oee/` y était resté au squelette d'origine ;
   remis à niveau le 2026-10-06 par l'assistant (copie + `git add`), avec
   `flows_app_developer.Group.yaml` et ce journal. Commit et push à faire par moi.

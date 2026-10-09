@@ -4,7 +4,15 @@ import { cdfTaskRunner } from '../shared/utils/semaphore';
 
 import { getExportStep, planExport } from './oeeExport';
 import type { ExportMetric, ExportSeries, ExportStepId } from './oeeExport';
-import { ASSET_SPACE, DAY_MS, getTrendRange, OEE_ALERT_THRESHOLD, OEE_METRICS, OEE_SPACE } from './types';
+import {
+  ASSET_SPACE,
+  DAY_MS,
+  getTrendRange,
+  HOUR_MS,
+  OEE_ALERT_THRESHOLD,
+  OEE_METRICS,
+  OEE_SPACE,
+} from './types';
 import type {
   OeeMetric,
   Site,
@@ -30,6 +38,8 @@ export interface OeeService {
   getOeeTrend(unitExternalId: string, endMs: number, rangeId: TrendRangeId): Promise<TrendPoint[]>;
   /** What each unit did over the time frame that ends at `endMs`: mean OEE and time below the alert threshold. */
   getUnitOeeStats(unitExternalIds: string[], endMs: number, rangeId: TrendRangeId): Promise<UnitOeeStats[]>;
+  /** Mean OEE and time below the alert threshold of each unit, from hourly averages, from `startMs` to `endMs` (exclusive). */
+  getUnitOeeStatsForPeriod(unitExternalIds: string[], startMs: number, endMs: number): Promise<UnitOeeStats[]>;
   /** Mean quality, performance and availability of each unit over the same time frame. */
   getUnitComponentMeans(
     unitExternalIds: string[],
@@ -197,15 +207,17 @@ export class CdfOeeService implements OeeService {
       range.stepMs
     );
 
-    return unitExternalIds.map((unit) => {
-      const oee = averages.get(seriesExternalId(unit, 'oee')) ?? [];
-      return {
-        externalId: unit,
-        meanOee: oee.length === 0 ? null : oee.reduce((sum, point) => sum + point.average, 0) / oee.length,
-        periods: oee.length,
-        periodsBelowAlert: oee.filter((point) => point.average < OEE_ALERT_THRESHOLD).length,
-      };
-    });
+    return toOeeStats(unitExternalIds, averages);
+  }
+
+  public async getUnitOeeStatsForPeriod(unitExternalIds: string[], startMs: number, endMs: number): Promise<UnitOeeStats[]> {
+    if (unitExternalIds.length === 0 || endMs <= startMs) return [];
+    const averages = await this.retrieveAverages(
+      unitExternalIds.map((unit) => seriesExternalId(unit, 'oee')),
+      { start: startMs, end: endMs, aggregates: ['average'], granularity: '1h' },
+      HOUR_MS
+    );
+    return toOeeStats(unitExternalIds, averages);
   }
 
   public async getUnitComponentMeans(
@@ -400,6 +412,19 @@ function seriesExternalId(assetExternalId: string, metric: OeeMetric): string {
 
 function byName(a: { name: string; externalId: string }, b: { name: string; externalId: string }): number {
   return a.name.localeCompare(b.name) || a.externalId.localeCompare(b.externalId);
+}
+
+/** Mean OEE and periods below the alert threshold of each unit, in the order of the request. */
+function toOeeStats(unitExternalIds: string[], averages: Map<string, AveragePoint[]>): UnitOeeStats[] {
+  return unitExternalIds.map((unit) => {
+    const oee = averages.get(seriesExternalId(unit, 'oee')) ?? [];
+    return {
+      externalId: unit,
+      meanOee: oee.length === 0 ? null : oee.reduce((sum, point) => sum + point.average, 0) / oee.length,
+      periods: oee.length,
+      periodsBelowAlert: oee.filter((point) => point.average < OEE_ALERT_THRESHOLD).length,
+    };
+  });
 }
 
 /** Mean of period averages, each weighted by its number of datapoints. */

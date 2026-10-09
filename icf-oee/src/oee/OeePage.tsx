@@ -5,11 +5,13 @@ import logoUrl from '../assets/logo.png';
 import { ExportStorageProvider } from './ExportStorageProvider';
 import { ExportView } from './ExportView';
 import { ErrorMessage } from './OeeStates';
+import { ReportStorageProvider } from './ReportStorageProvider';
 import { SiteDetail } from './SiteDetail';
 import { SitesOverview } from './SitesOverview';
 import { COMPANY_NAME, isOeeView } from './types';
 import { UnitTypesView } from './UnitTypesView';
 import { useOeeViewModel } from './useOeeViewModel';
+import { WeeklyReportView } from './WeeklyReportView';
 
 /** A finger needs a larger target than a mouse pointer. */
 const TOUCH_TAB = 'pointer-coarse:h-11 pointer-coarse:px-3';
@@ -20,6 +22,7 @@ export function OeePage() {
 
   return (
     <ExportStorageProvider>
+    <ReportStorageProvider>
     <main className="min-h-screen bg-muted/50 text-foreground">
       <div className="mx-auto flex w-full max-w-[min(100%,var(--container-8xl))] flex-col gap-6 px-4 py-6 sm:px-6 sm:py-8">
         <header className="flex min-w-0 items-center gap-4">
@@ -40,11 +43,13 @@ export function OeePage() {
             if (isOeeView(value)) selectView(value);
           }}
         >
-          <TabsList>
+          {/* Five tabs are wider than a phone: the tab bar scrolls inside its own frame, not the page. */}
+          <TabsList className="max-w-full overflow-x-auto">
             <TabsTrigger value="overview" className={TOUCH_TAB}>Overview</TabsTrigger>
             <TabsTrigger value="units" className={TOUCH_TAB}>Unit types</TabsTrigger>
             <TabsTrigger value="site" className={TOUCH_TAB}>Site</TabsTrigger>
             <TabsTrigger value="export" className={TOUCH_TAB}>Export</TabsTrigger>
+            <TabsTrigger value="report" className={TOUCH_TAB}>Weekly report</TabsTrigger>
           </TabsList>
 
           <TabsPanel value="overview">
@@ -71,9 +76,16 @@ export function OeePage() {
               <ExportView />
             </div>
           </TabsPanel>
+
+          <TabsPanel value="report">
+            <div className="pt-6">
+              <WeeklyReportView />
+            </div>
+          </TabsPanel>
         </Tabs>
       </div>
     </main>
+    </ReportStorageProvider>
     </ExportStorageProvider>
   );
 }

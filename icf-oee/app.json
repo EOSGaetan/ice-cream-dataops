@@ -2,7 +2,7 @@
   "name": "Ice Cream Factory OEE",
   "description": "OEE by site and unit for the CDF Bootcamp Ice Cream Factory",
   "externalId": "icf-oee",
-  "versionTag": "0.0.7",
+  "versionTag": "0.0.8",
   "infra": "appsApi",
   "deployments": [
     {

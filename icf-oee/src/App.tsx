@@ -11,7 +11,7 @@ import type { ComponentProps } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 
 import { AppErrorBoundary } from './oee/AppErrorBoundary';
-import { downloadCsvFile } from './oee/downloadFile';
+import { downloadTextFile } from './oee/downloadFile';
 import { OeeDepsContext } from './oee/oeeDeps';
 import { OeePage } from './oee/OeePage';
 import { createOeeService } from './oee/oeeService';
@@ -56,10 +56,11 @@ type OeeAppProps = AppConnectResult & {
   createService: (client: OeeCdfClient) => OeeService;
   downloadFile: (fileName: string, content: string) => void;
   isTouchScreen: boolean;
+  now: () => number;
 };
 
 /** Wires the OEE page to the authenticated Cognite client and to the Fusion host. */
-function OeeApp({ api, initialState, createService, downloadFile, isTouchScreen }: OeeAppProps) {
+function OeeApp({ api, initialState, createService, downloadFile, isTouchScreen, now }: OeeAppProps) {
   const client = useCogniteSdk();
   const deps = useMemo(
     () => ({
@@ -68,8 +69,9 @@ function OeeApp({ api, initialState, createService, downloadFile, isTouchScreen 
       syncState: (serialized: string) => void api.syncInternalState(serialized),
       downloadFile,
       isTouchScreen,
+      now,
     }),
-    [api, client, createService, downloadFile, isTouchScreen]
+    [api, client, createService, downloadFile, isTouchScreen, now]
   );
 
   return (
@@ -89,14 +91,16 @@ type AppProps = {
   createService?: (client: OeeCdfClient) => OeeService;
   downloadFile?: (fileName: string, content: string) => void;
   isTouchScreen?: boolean;
+  now?: () => number;
 };
 
 function App({
   deps,
   connectToHostApp = deps?.connectToHostApp ?? connectToHostAppImpl,
   createService = createOeeService,
-  downloadFile = downloadCsvFile,
+  downloadFile = downloadTextFile,
   isTouchScreen = detectTouchScreen(),
+  now = Date.now,
 }: AppProps) {
   const [connection, setConnection] = useState<Connection>({ status: 'connecting' });
 
@@ -126,6 +130,7 @@ function App({
           createService={createService}
           downloadFile={downloadFile}
           isTouchScreen={isTouchScreen}
+          now={now}
         />
       ) : (
         loadingFallback

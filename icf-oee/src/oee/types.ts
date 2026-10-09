@@ -35,7 +35,7 @@ export type TrendPoint = {
   oee: number;
 };
 
-const HOUR_MS = 60 * 60 * 1000;
+export const HOUR_MS = 60 * 60 * 1000;
 export const DAY_MS = 24 * HOUR_MS;
 
 /**
@@ -92,7 +92,7 @@ export function getTrendRange(id: TrendRangeId): TrendRange {
 }
 
 /** The tabs of the app. */
-export const OEE_VIEWS = ['overview', 'units', 'site', 'export'] as const;
+export const OEE_VIEWS = ['overview', 'units', 'site', 'export', 'report'] as const;
 export type OeeView = (typeof OEE_VIEWS)[number];
 
 export function isOeeView(value: unknown): value is OeeView {
