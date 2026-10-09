@@ -2,6 +2,7 @@ import { DataGrid } from '@cognite/aura/data-grid';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useMemo } from 'react';
 
+import { useTableHeights } from './oeeDeps';
 import { formatPercent } from './oeeFormat';
 import { OeeValue } from './OeeValue';
 import { SelectableName } from './SelectableName';
@@ -20,6 +21,7 @@ type UnitTypesTableProps = {
 };
 
 export function UnitTypesTable({ unitTypes, selectedName, isLoadingDetails, onSelect }: UnitTypesTableProps) {
+  const { rowHeight, headerHeight } = useTableHeights();
   const columns = useMemo(() => buildColumns(selectedName, isLoadingDetails), [selectedName, isLoadingDetails]);
 
   return (
@@ -34,6 +36,8 @@ export function UnitTypesTable({ unitTypes, selectedName, isLoadingDetails, onSe
         enableSorting
         defaultSorting={DEFAULT_SORTING}
         pinnedColumns={PINNED_COLUMNS}
+        rowHeight={rowHeight}
+        headerHeight={headerHeight}
       />
     </div>
   );

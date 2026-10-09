@@ -17,6 +17,7 @@ import { OeePage } from './oee/OeePage';
 import { createOeeService } from './oee/oeeService';
 import type { OeeCdfClient, OeeService } from './oee/oeeService';
 import { OeeStateProvider } from './oee/OeeStateProvider';
+import { detectTouchScreen } from './oee/touchScreen';
 
 type AppApi = Pick<HostAppAPI, 'syncInternalState'>;
 type AppConnectResult = { api: AppApi; initialState?: string };
@@ -54,10 +55,11 @@ const errorFallback = (
 type OeeAppProps = AppConnectResult & {
   createService: (client: OeeCdfClient) => OeeService;
   downloadFile: (fileName: string, content: string) => void;
+  isTouchScreen: boolean;
 };
 
 /** Wires the OEE page to the authenticated Cognite client and to the Fusion host. */
-function OeeApp({ api, initialState, createService, downloadFile }: OeeAppProps) {
+function OeeApp({ api, initialState, createService, downloadFile, isTouchScreen }: OeeAppProps) {
   const client = useCogniteSdk();
   const deps = useMemo(
     () => ({
@@ -65,8 +67,9 @@ function OeeApp({ api, initialState, createService, downloadFile }: OeeAppProps)
       // Writes to the ?customAppInternalState search param so the URL is bookmarkable/shareable.
       syncState: (serialized: string) => void api.syncInternalState(serialized),
       downloadFile,
+      isTouchScreen,
     }),
-    [api, client, createService, downloadFile]
+    [api, client, createService, downloadFile, isTouchScreen]
   );
 
   return (
@@ -85,6 +88,7 @@ type AppProps = {
   connectToHostApp?: () => Promise<AppConnectResult>;
   createService?: (client: OeeCdfClient) => OeeService;
   downloadFile?: (fileName: string, content: string) => void;
+  isTouchScreen?: boolean;
 };
 
 function App({
@@ -92,6 +96,7 @@ function App({
   connectToHostApp = deps?.connectToHostApp ?? connectToHostAppImpl,
   createService = createOeeService,
   downloadFile = downloadCsvFile,
+  isTouchScreen = detectTouchScreen(),
 }: AppProps) {
   const [connection, setConnection] = useState<Connection>({ status: 'connecting' });
 
@@ -120,6 +125,7 @@ function App({
           initialState={connection.initialState}
           createService={createService}
           downloadFile={downloadFile}
+          isTouchScreen={isTouchScreen}
         />
       ) : (
         loadingFallback

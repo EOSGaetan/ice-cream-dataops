@@ -122,10 +122,18 @@
   availability fill their columns afterwards, with a loading mark in the meantime.
 - FR-023: System MUST show a message with a Try again action, instead of a blank page, when
   the page fails to display.
-- FR-024: System MUST stay usable on a phone-size screen (375 px wide): no horizontal scroll
-  of the page, tables scrolling inside their own frame, tabs, time-frame shortcuts and map
-  markers at least 44 px high on touch screens, and a unit type chart that shortens the names
-  to leave room for the bars.
+- FR-024: System MUST stay usable on a phone-size (375 px) and a tablet-size (768 px) screen:
+  no horizontal scroll of the page, tables scrolling inside their own frame, every control at
+  least 40 px high on touch screens (tabs, time-frame shortcuts and map markers 44 px; table
+  rows and headers, selects, date fields, buttons and checkbox lines 40 px), card titles
+  above their description with the description shown in full, and a unit type chart that
+  shortens the names to leave room for the bars.
+- FR-026: System MUST explain a failed read in plain words for the usual CDF answers (no
+  access: ask the administrator of the project for read access; too many requests: wait;
+  CDF problem: try again) and MUST offer a Try again action that reads again only what
+  failed.
+- FR-027: System MUST let the user cancel a running export: no further request is sent, no
+  file is downloaded, and the page says so.
 - FR-025: System MUST meet WCAG 2.2 level AA on the points an automated check can verify:
   text contrast of at least 4.5:1, zoom allowed, every control reachable and usable with the
   keyboard, and the OEE level (below 70%, below 85%) given in text and not by colour alone.

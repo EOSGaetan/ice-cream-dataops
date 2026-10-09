@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { makeOeeService, makeOeeWrapper, UNITS, UPDATED_AT } from '../__mocks__/oee';
 import type { FakeOeeService } from '../__mocks__/oee';
@@ -16,6 +16,11 @@ const CHART_TIMEOUT_MS = 10000;
 
 describe(OeePage.name, () => {
   let service: FakeOeeService;
+
+  // The charts are loaded on demand. Their first import is slow in the test runner: do it once here.
+  beforeAll(async () => {
+    await Promise.all([import('./OeeTrendChart'), import('./UnitTypesChart')]);
+  }, 120000);
 
   beforeEach(() => {
     service = makeOeeService();

@@ -32,6 +32,7 @@ export const DEFAULT_EXPORT_FORM: ExportForm = {
 export type ExportRun =
   | { status: 'idle' }
   | { status: 'running'; done: number; total: number }
+  | { status: 'cancelled' }
   | { status: 'done'; fileName: string; rowCount: number }
   | { status: 'failed'; message: string };
 
@@ -40,6 +41,9 @@ export type ExportStorage = {
   setForm: (next: ExportForm) => void;
   run: ExportRun;
   setRun: (next: ExportRun) => void;
+  /** Starts a run that can be cancelled: the signal aborts when `cancelRun` is called. */
+  beginRun: () => AbortSignal;
+  cancelRun: () => void;
 };
 
 export const ExportStorageContext = createContext<ExportStorage | null>(null);

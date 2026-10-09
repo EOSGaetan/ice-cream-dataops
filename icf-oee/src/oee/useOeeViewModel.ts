@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
 import { useOeeDeps } from './oeeDeps';
+import { explainError } from './oeeErrors';
 import { lowestUnits, summarizeSite } from './oeeKpi';
 import type { SiteSummary } from './oeeKpi';
 import { useOeeState } from './oeeState';
@@ -157,7 +158,7 @@ export function useOeeViewModel(): OeeViewModel {
     overview: {
       items: view === 'overview' ? sites.map((site) => toSiteOverview(site, allUnitsQuery)) : [],
       isLoading: sitesQuery.isLoading,
-      error: sitesQuery.error === null ? null : `The sites could not be loaded. ${sitesQuery.error.message}`.trim(),
+      error: sitesQuery.error === null ? null : `The sites could not be loaded. ${explainError(sitesQuery.error)}`.trim(),
     },
     openSite,
     unitTypes: {
@@ -169,7 +170,7 @@ export function useOeeViewModel(): OeeViewModel {
       error:
         view !== 'units' || unitTypesError === null
           ? null
-          : `The unit statistics could not be loaded. ${unitTypesError.message}`.trim(),
+          : `The unit statistics could not be loaded. ${explainError(unitTypesError)}`.trim(),
     },
     isLoadingUnitTypeDetails: view === 'units' && unitTypes.length > 0 && componentsQuery.data === undefined,
     selectedUnitType,
@@ -196,7 +197,7 @@ function toRegion<T>(query: QueryState<T>, message: string): DataRegion<T> {
   return {
     items: query.data ?? [],
     isLoading: query.isLoading,
-    error: query.error === null ? null : `${message} ${query.error.message}`.trim(),
+    error: query.error === null ? null : `${message} ${explainError(query.error)}`.trim(),
   };
 }
 
@@ -207,7 +208,7 @@ function toSiteOverview(site: Site, query: QueryState<SiteUnit>): SiteOverview {
     summary: units === undefined ? null : summarizeSite(units),
     lowestUnits: units === undefined ? [] : lowestUnits(units, LOWEST_UNIT_COUNT),
     isLoading: query.isLoading,
-    error: query.error === null ? null : `The units could not be loaded. ${query.error.message}`.trim(),
+    error: query.error === null ? null : `The units could not be loaded. ${explainError(query.error)}`.trim(),
   };
 }
 

@@ -141,7 +141,8 @@ describe(useExportViewModel.name, () => {
         endMs: DEFAULT_END,
         stepId: '1h',
       },
-      expect.any(Function)
+      expect.any(Function),
+      expect.any(AbortSignal)
     );
     const fileName = 'icf-oee_all-sites_all-unit-types_2026-09-28_2026-10-04_1h.csv';
     expect(result.current.run).toEqual({ status: 'done', fileName, rowCount: 4 });

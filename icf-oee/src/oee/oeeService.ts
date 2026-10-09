@@ -37,7 +37,12 @@ export interface OeeService {
     rangeId: TrendRangeId
   ): Promise<UnitComponentMeans[]>;
   /** The averages of the chosen time series of the chosen units, one per step, from `startMs` to `endMs` (exclusive). */
-  exportAverages(request: ExportRequest, onProgress?: (done: number, total: number) => void): Promise<ExportSeries[]>;
+  /** Once `signal` aborts, no further request is sent and the promise rejects. */
+  exportAverages(
+    request: ExportRequest,
+    onProgress?: (done: number, total: number) => void,
+    signal?: AbortSignal
+  ): Promise<ExportSeries[]>;
 }
 
 export type ExportRequest = {
@@ -230,7 +235,8 @@ export class CdfOeeService implements OeeService {
 
   public async exportAverages(
     { unitExternalIds, metrics, startMs, endMs, stepId }: ExportRequest,
-    onProgress?: (done: number, total: number) => void
+    onProgress?: (done: number, total: number) => void,
+    signal?: AbortSignal
   ): Promise<ExportSeries[]> {
     const step = getExportStep(stepId);
     const plan = planExport(unitExternalIds.length, metrics.length, startMs, endMs, step.stepMs);
@@ -251,8 +257,10 @@ export class CdfOeeService implements OeeService {
       for (const batch of chunk(seriesList, plan.seriesPerRequest)) {
         requests.push(
           this.runner
-            .schedule(() =>
-              this.client.datapoints.retrieve({
+            .schedule(async () => {
+              // A cancelled export sends no further request.
+              signal?.throwIfAborted();
+              return this.client.datapoints.retrieve({
                 items: batch.map((series) => ({
                   instanceId: { space: OEE_SPACE, externalId: `${series.unitExternalId}:${series.metric}` },
                 })),
@@ -263,8 +271,8 @@ export class CdfOeeService implements OeeService {
                 limit: plan.pointsPerWindow,
                 // A unit can lack one of its time series: unknown ids are expected.
                 ignoreUnknownIds: true,
-              })
-            )
+              });
+            })
             .then((result) => {
               for (const retrieved of result) {
                 const series = byExternalId.get(retrieved.instanceId?.externalId ?? '');

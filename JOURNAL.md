@@ -797,7 +797,15 @@ commitée ni déployée.**
   de l'app en deux commits : `d24de5e` (code, 45 fichiers) et `67bf143` (rapports de revue).
   Pas de déploiement en prod. Clone GitHub `C:\dev\cdf-bootcamp-33` préparé le 2026-10-09
   (copie de `icf-oee/` et de ce journal, 54 fichiers indexés, aucun `.env` ni certificat) :
-  **commit et push à faire par moi**. La commande de déploiement se lance depuis `icf-oee` (`npm run deploy --
+  commit et push faits par moi le 2026-10-09 (`2304811` ; contrôle après le push :
+  `origin/main` au même commit, arbre propre, 386 fichiers, aucun `.env`).
+  Piège du push : le premier a été refusé en 403 (`Permission ... denied to
+  CAJ1072523_totalen`). Une règle `credential.https://github.com.helper` dans mon
+  `.gitconfig` fait passer Git par le compte d'entreprise au lieu de `EOSGaetan`. Passé
+  avec, pour cette fois : `git -C C:\dev\cdf-bootcamp-33 -c credential.https://github.com.helper=
+  -c credential.https://github.com.helper=manager -c credential.https://github.com.username=EOSGaetan push`.
+  Réglage durable non fait (reviendra au prochain push).
+  La commande de déploiement se lance depuis `icf-oee` (`npm run deploy --
   -d cdf-bootcamp-33-test`) ; lancée depuis `Cognite`, elle échoue sur `ENOENT package.json`.
   - Revue de code n°1 (`icf-oee/reviews/code-review/feedback-round-1/`) : 3 points bloquants
     (un fichier de `src/` exclu de la couverture, couverture mesurée seulement sur les fichiers
@@ -834,6 +842,34 @@ commitée ni déployée.**
     un lecteur d'écran.
   - Prévisualisation locale : `.claude/launch.json` est maintenant dans le dossier `Cognite`
     (racine de la session), la page est `https://localhost:3001/dev-preview.html`.
+- **Version 0.0.6 écrite le 2026-10-09** (à ma demande : lignes de tableau à 40 px sur écran
+  tactile, et viser 4 sur 5 à la grille qualité Flows).
+  - Écran tactile : lignes et en-têtes de tableau, listes déroulantes, champs de date, boutons
+    et lignes de cases à cocher à 40 px (onglets et points de carte déjà à 44 px). L'app sait
+    qu'elle est sur un écran tactile par `matchMedia('(pointer: coarse)')`, lu une fois au
+    démarrage (`touchScreen.ts`).
+  - Deux défauts trouvés en regardant une capture en taille téléphone, que les mesures
+    n'avaient pas montrés : la description des cartes était coupée après deux lignes (le
+    titre et la description sont maintenant l'un sous l'autre en dessous de 1280 px), et les
+    cases à cocher de l'export débordaient de l'écran (elles passent à la ligne).
+  - Erreurs de lecture : phrase claire pour les réponses habituelles de CDF (403 : demander
+    l'accès à l'administrateur du projet ; 429 : attendre ; 5xx : réessayer) et bouton
+    « Try again » qui ne relit que ce qui a échoué.
+  - Export : bouton « Cancel » pendant un export ; plus aucune requête n'est envoyée et aucun
+    fichier n'est téléchargé.
+  - Contrôles : 205 tests, couverture 96,9 % des lignes, lint et build OK. Rendu contrôlé sur
+    la page de prévisualisation locale en 375 px, 768 px et bureau.
+  - Mesuré dans Fusion test sur la 0.0.5 (vraies données) : classement de l'onglet Unit types
+    affiché environ 2 s après le clic depuis l'Overview, et en moins de 10 s en ouvrant
+    directement l'onglet (chargement de Fusion compris), contre 20 à 25 s en 0.0.4.
+  - Note estimée par l'assistant à la grille qualité Flows (10 questions) : 3,4 pour la 0.0.4,
+    3,8 pour la 0.0.5, **4,0 pour la 0.0.6**. Ce n'est pas la note officielle : la grille
+    demande que je déroule moi-même les tâches (revue de design non faite).
+  - **Déployée en test puis activée le 2026-10-09** après ma validation du brouillon :
+    `0.0.6 is now PUBLISHED`, `ACTIVE`, `Superseded 0.0.5 → PUBLISHED`. Commitée dans le dépôt
+    de l'app (`5d1ebbe`, 32 fichiers). Pas de déploiement en prod. Clone GitHub
+    `C:\dev\cdf-bootcamp-33` préparé (copie de `icf-oee/` et de ce journal, fichiers
+    indexés) : **commit et push à faire par moi**, avec la commande du piège 403 ci-dessus.
 - Clone GitHub `C:\dev\cdf-bootcamp-33` : `icf-oee/` y était resté au squelette d'origine ;
   remis à niveau le 2026-10-06 par l'assistant (copie + `git add`), avec
   `flows_app_developer.Group.yaml` et ce journal. Commit et push à faire par moi.

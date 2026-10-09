@@ -10,6 +10,7 @@ import { getExportStep } from '../src/oee/oeeExport';
 import { OeePage } from '../src/oee/OeePage';
 import type { OeeService } from '../src/oee/oeeService';
 import { OeeStateProvider } from '../src/oee/OeeStateProvider';
+import { detectTouchScreen } from '../src/oee/touchScreen';
 import { getTrendRange } from '../src/oee/types';
 
 import '../src/styles.css';
@@ -124,7 +125,14 @@ const queryClient = new QueryClient();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <QueryClientProvider client={queryClient}>
-    <OeeDepsContext.Provider value={{ service, syncState: () => undefined, downloadFile: downloadCsvFile }}>
+    <OeeDepsContext.Provider
+      value={{
+        service,
+        syncState: () => undefined,
+        downloadFile: downloadCsvFile,
+        isTouchScreen: detectTouchScreen(),
+      }}
+    >
       <OeeStateProvider initialState={initialState}>
         <OeePage />
       </OeeStateProvider>

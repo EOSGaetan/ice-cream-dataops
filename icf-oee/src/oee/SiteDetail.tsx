@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@cognite/aura/components/card';
 import { lazy, Suspense } from 'react';
 
+import { FULL_CARD_DESCRIPTION, STACKED_CARD_HEADER } from './cardLayout';
 import { formatDateTime, formatPercent, summarizeTrend } from './oeeFormat';
 import { summarizeSite } from './oeeKpi';
 import { Empty, ErrorMessage, Loading } from './OeeStates';
@@ -53,9 +54,9 @@ export function SiteDetail({
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className={selectedSiteId === null ? 'min-w-0 lg:col-span-3' : 'min-w-0 lg:col-span-2'}>
           <Card>
-            <CardHeader>
+            <CardHeader className={STACKED_CARD_HEADER}>
               <CardTitle as="h2">{selectedSite ? `Units of ${selectedSite.name}` : 'Units'}</CardTitle>
-              <CardDescription>{describeUnits(selectedSiteId, units.isLoading, units.error, units.items.length)}</CardDescription>
+              <CardDescription className={FULL_CARD_DESCRIPTION}>{describeUnits(selectedSiteId, units.isLoading, units.error, units.items.length)}</CardDescription>
             </CardHeader>
             <CardContent>
               <UnitsRegion
@@ -73,9 +74,9 @@ export function SiteDetail({
         {selectedSiteId !== null && (
           <div className="min-w-0 lg:col-span-1">
             <Card>
-              <CardHeader>
+              <CardHeader className={STACKED_CARD_HEADER}>
                 <CardTitle as="h2">{selectedUnit ? `OEE trend of ${selectedUnit.name}` : 'OEE trend'}</CardTitle>
-                <CardDescription>{describeTrend(selectedUnit, range)}</CardDescription>
+                <CardDescription className={FULL_CARD_DESCRIPTION}>{describeTrend(selectedUnit, range)}</CardDescription>
               </CardHeader>
               <CardContent>
                 {selectedUnit === null ? (

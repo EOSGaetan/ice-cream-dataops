@@ -3,6 +3,7 @@ import { useCallback } from 'react';
 import { useExportStorage } from './exportForm';
 import type { ExportForm, ExportRun } from './exportForm';
 import { useOeeDeps } from './oeeDeps';
+import { explainError } from './oeeErrors';
 import {
   buildCsv,
   exportFileName,
@@ -53,11 +54,13 @@ export type ExportViewModel = {
   problem: string | null;
   run: ExportRun;
   exportCsv: () => void;
+  /** Stops the running export: no further request, no file. */
+  cancelExport: () => void;
 };
 
 export function useExportViewModel(): ExportViewModel {
   const { service, downloadFile } = useOeeDeps();
-  const { form, setForm, run, setRun } = useExportStorage();
+  const { form, setForm, run, setRun, beginRun, cancelRun } = useExportStorage();
 
   const sitesQuery = useSitesQuery();
   const sites = sitesQuery.data ?? [];
@@ -114,6 +117,7 @@ export function useExportViewModel(): ExportViewModel {
       siteName: site.name,
     }));
 
+    const signal = beginRun();
     setRun({ status: 'running', done: 0, total: plan.requests });
     service
       .exportAverages(
@@ -124,9 +128,13 @@ export function useExportViewModel(): ExportViewModel {
           endMs,
           stepId: form.stepId,
         },
-        (done, total) => setRun({ status: 'running', done, total })
+        (done, total) => {
+          if (!signal.aborted) setRun({ status: 'running', done, total });
+        },
+        signal
       )
       .then((series) => {
+        if (signal.aborted) return;
         const { content, rowCount } = buildCsv({
           units,
           metrics: form.metrics,
@@ -141,9 +149,15 @@ export function useExportViewModel(): ExportViewModel {
         setRun({ status: 'done', fileName, rowCount });
       })
       .catch((error: unknown) => {
-        const detail = error instanceof Error ? error.message : '';
-        setRun({ status: 'failed', message: `The export failed. ${detail}`.trim() });
+        if (signal.aborted) return;
+        setRun({ status: 'failed', message: `The export failed. ${explainError(error)}`.trim() });
       });
+  };
+
+  const cancelExport = () => {
+    if (run.status !== 'running') return;
+    cancelRun();
+    setRun({ status: 'cancelled' });
   };
 
   return {
@@ -171,12 +185,13 @@ export function useExportViewModel(): ExportViewModel {
     setStep: (stepId) => update({ ...form, stepId }),
     setFormat: (formatId) => update({ ...form, formatId }),
     isLoading: allUnits === null && loadFailure === null,
-    loadError: loadFailure === null ? null : `The units could not be loaded. ${loadFailure.message}`.trim(),
+    loadError: loadFailure === null ? null : `The units could not be loaded. ${explainError(loadFailure)}`.trim(),
     unitCount: matching.length,
     plan,
     problem,
     run,
     exportCsv,
+    cancelExport,
   };
 }
 

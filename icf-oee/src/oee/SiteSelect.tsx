@@ -7,6 +7,7 @@ import {
   SelectValue,
 } from '@cognite/aura/components/select';
 
+import { TOUCH_FIELD_CLASS } from './touchScreen';
 import type { Site } from './types';
 
 const SITE_SELECT_ID = 'oee-site-select';
@@ -33,7 +34,7 @@ export function SiteSelect({ sites, selectedSiteId, isLoading, onSelect }: SiteS
         }}
         disabled={isLoading}
       >
-        <SelectTrigger id={SITE_SELECT_ID}>
+        <SelectTrigger id={SITE_SELECT_ID} className={TOUCH_FIELD_CLASS}>
           <SelectValue placeholder={isLoading ? 'Loading sites…' : 'Select a site'} />
         </SelectTrigger>
         <SelectContent>

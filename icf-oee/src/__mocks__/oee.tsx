@@ -116,6 +116,7 @@ type OeeWrapperOptions = {
   service: OeeService;
   syncState?: (serialized: string) => void;
   downloadFile?: (fileName: string, content: string) => void;
+  isTouchScreen?: boolean;
   initialState?: string;
 };
 
@@ -124,10 +125,11 @@ export function makeOeeWrapper({
   service,
   syncState = () => undefined,
   downloadFile = () => undefined,
+  isTouchScreen = false,
   initialState,
 }: OeeWrapperOptions): ComponentType<{ children: ReactNode }> {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  const deps = { service, syncState, downloadFile };
+  const deps = { service, syncState, downloadFile, isTouchScreen };
 
   return function OeeWrapper({ children }: { children: ReactNode }) {
     return (

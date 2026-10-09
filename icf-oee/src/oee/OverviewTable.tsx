@@ -1,6 +1,7 @@
 import { DataGrid } from '@cognite/aura/data-grid';
 import type { ColumnDef } from '@tanstack/react-table';
 
+import { useTableHeights } from './oeeDeps';
 import { OeeValue } from './OeeValue';
 import type { UnitOee } from './types';
 import type { SiteOverview } from './useOeeViewModel';
@@ -38,9 +39,10 @@ type OverviewTableProps = {
 };
 
 export function OverviewTable({ sites, onOpenSite }: OverviewTableProps) {
+  const { rowHeight, headerHeight } = useTableHeights();
   return (
     // DataGrid is virtualized: it fills its parent, which needs a size (10 sites and the header).
-    <div className="h-[25.5rem] w-full min-w-0">
+    <div className="h-[25.5rem] w-full min-w-0 pointer-coarse:h-[28rem]">
       <DataGrid
         aria-label="Lowest OEE units by site"
         data={sites}
@@ -50,6 +52,8 @@ export function OverviewTable({ sites, onOpenSite }: OverviewTableProps) {
         enableSorting
         defaultSorting={DEFAULT_SORTING}
         pinnedColumns={PINNED_COLUMNS}
+        rowHeight={rowHeight}
+        headerHeight={headerHeight}
       />
     </div>
   );

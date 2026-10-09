@@ -1,5 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@cognite/aura/components/card';
 
+import { FULL_CARD_DESCRIPTION, STACKED_CARD_HEADER } from './cardLayout';
 import { Empty, ErrorMessage, Loading } from './OeeStates';
 import { OverviewTable } from './OverviewTable';
 import { SitesMap } from './SitesMap';
@@ -24,9 +25,9 @@ export function SitesOverview({ overview, onOpenSite }: SitesOverviewProps) {
     <div className="flex flex-col gap-6">
       {unitsError !== null && <ErrorMessage message={unitsError} />}
       <Card>
-        <CardHeader>
+        <CardHeader className={STACKED_CARD_HEADER}>
           <CardTitle as="h2">Sites</CardTitle>
-          <CardDescription>
+          <CardDescription className={FULL_CARD_DESCRIPTION}>
             {isLoadingUnits
               ? `Loading the units of the ${overview.items.length} sites…`
               : `${overview.items.length} sites, coloured by the mean of the latest OEE of their units.`}
@@ -38,9 +39,9 @@ export function SitesOverview({ overview, onOpenSite }: SitesOverviewProps) {
       </Card>
 
       <Card>
-        <CardHeader>
+        <CardHeader className={STACKED_CARD_HEADER}>
           <CardTitle as="h2">Lowest OEE by site</CardTitle>
-          <CardDescription>The three units with the lowest latest OEE in each site. Select a row to open the site.</CardDescription>
+          <CardDescription className={FULL_CARD_DESCRIPTION}>The three units with the lowest latest OEE in each site. Select a row to open the site.</CardDescription>
         </CardHeader>
         <CardContent>
           <OverviewTable sites={overview.items} onOpenSite={onOpenSite} />

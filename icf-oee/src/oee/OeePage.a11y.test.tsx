@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import axe from 'axe-core';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { makeOeeService, makeOeeWrapper } from '../__mocks__/oee';
 import type { FakeOeeService } from '../__mocks__/oee';
@@ -33,6 +33,11 @@ const TABS = [
 
 describe('OeePage accessibility', () => {
   let service: FakeOeeService;
+
+  // The charts are loaded on demand. Their first import is slow in the test runner: do it once here.
+  beforeAll(async () => {
+    await Promise.all([import('./OeeTrendChart'), import('./UnitTypesChart')]);
+  }, 120000);
 
   beforeEach(() => {
     service = makeOeeService();

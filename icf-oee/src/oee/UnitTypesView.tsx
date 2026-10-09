@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@cognite/aura/components/card';
 import { lazy, Suspense } from 'react';
 
+import { FULL_CARD_DESCRIPTION, STACKED_CARD_HEADER } from './cardLayout';
 import { formatPercent } from './oeeFormat';
 import { Empty, ErrorMessage, Loading } from './OeeStates';
 import { TrendRangeControl } from './TrendRangeControl';
@@ -98,9 +99,9 @@ function UnitTypesRegion({
   return (
     <>
       <Card>
-        <CardHeader>
+        <CardHeader className={STACKED_CARD_HEADER}>
           <CardTitle as="h2">Most problematic unit types</CardTitle>
-          <CardDescription>{describeRanking(charted, bucket)}</CardDescription>
+          <CardDescription className={FULL_CARD_DESCRIPTION}>{describeRanking(charted, bucket)}</CardDescription>
         </CardHeader>
         <CardContent>
           <Suspense fallback={<Loading label="Loading chart…" />}>
@@ -112,9 +113,9 @@ function UnitTypesRegion({
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="min-w-0 lg:col-span-2">
           <Card>
-            <CardHeader>
+            <CardHeader className={STACKED_CARD_HEADER}>
               <CardTitle as="h2">Unit types</CardTitle>
-              <CardDescription>
+              <CardDescription className={FULL_CARD_DESCRIPTION}>
                 {`${unitTypes.length} types, ${unitCount} units. Select a row to see the units of a type.`}
               </CardDescription>
             </CardHeader>
@@ -131,9 +132,9 @@ function UnitTypesRegion({
 
         <div className="min-w-0 lg:col-span-1">
           <Card>
-            <CardHeader>
+            <CardHeader className={STACKED_CARD_HEADER}>
               <CardTitle as="h2">{selectedUnitType ? `${selectedUnitType.name} by site` : 'Units of a type'}</CardTitle>
-              <CardDescription>
+              <CardDescription className={FULL_CARD_DESCRIPTION}>
                 {selectedUnitType
                   ? `${selectedUnitType.unitCount} units in ${selectedUnitType.siteCount} sites. Select a row to open the unit.`
                   : 'The units of the selected type, site by site.'}

@@ -1,6 +1,7 @@
 import { DataGrid } from '@cognite/aura/data-grid';
 import type { ColumnDef } from '@tanstack/react-table';
 
+import { useTableHeights } from './oeeDeps';
 import { formatPercent } from './oeeFormat';
 import { OeeValue } from './OeeValue';
 import { belowAlertShare } from './unitTypes';
@@ -37,6 +38,7 @@ type UnitTypeDetailProps = {
 
 /** The units of one type, site by site. */
 export function UnitTypeDetail({ members, onOpenUnit }: UnitTypeDetailProps) {
+  const { rowHeight, headerHeight } = useTableHeights();
   return (
     // DataGrid is virtualized: it fills its parent, which needs a size.
     <div className="h-[26rem] w-full min-w-0">
@@ -48,6 +50,8 @@ export function UnitTypeDetail({ members, onOpenUnit }: UnitTypeDetailProps) {
         onRowClick={(row) => onOpenUnit(row.original.site.externalId, row.original.unit.externalId)}
         enableSorting
         pinnedColumns={PINNED_COLUMNS}
+        rowHeight={rowHeight}
+        headerHeight={headerHeight}
       />
     </div>
   );

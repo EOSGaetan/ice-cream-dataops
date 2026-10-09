@@ -18,10 +18,12 @@ import {
 } from '@cognite/aura/components/select';
 import type { ReactNode } from 'react';
 
+import { FULL_CARD_DESCRIPTION, STACKED_CARD_HEADER } from './cardLayout';
 import type { ExportRun } from './exportForm';
 import { CSV_FORMATS, EXPORT_METRICS, EXPORT_STEPS, isCsvFormatId, isExportStepId } from './oeeExport';
 import type { ExportPlan } from './oeeExport';
 import { ErrorMessage, Loading } from './OeeStates';
+import { TOUCH_FIELD_CLASS, TOUCH_LINE_CLASS } from './touchScreen';
 import { useExportViewModel } from './useExportViewModel';
 
 /** The select value that stands for "no filter". */
@@ -35,9 +37,9 @@ export function ExportView() {
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className={STACKED_CARD_HEADER}>
         <CardTitle as="h2">Export to CSV</CardTitle>
-        <CardDescription>
+        <CardDescription className={FULL_CARD_DESCRIPTION}>
           Averages of the computed OEE time series, one row per unit and per step, to analyse in Excel.
         </CardDescription>
       </CardHeader>
@@ -53,7 +55,7 @@ export function ExportView() {
                   value={siteId ?? ALL}
                   onValueChange={(value) => viewModel.setSite(value === ALL || value === '' ? null : value)}
                 >
-                  <SelectTrigger id="export-site">
+                  <SelectTrigger id="export-site" className={TOUCH_FIELD_CLASS}>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -73,7 +75,7 @@ export function ExportView() {
                   value={unitType ?? ALL}
                   onValueChange={(value) => viewModel.setUnitType(value === ALL || value === '' ? null : value)}
                 >
-                  <SelectTrigger id="export-unit-type">
+                  <SelectTrigger id="export-unit-type" className={TOUCH_FIELD_CLASS}>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -89,6 +91,7 @@ export function ExportView() {
 
               <Field id="export-from" label="First day (UTC)">
                 <Input
+                  className={TOUCH_FIELD_CLASS}
                   id="export-from"
                   type="date"
                   value={from ?? ''}
@@ -99,6 +102,7 @@ export function ExportView() {
 
               <Field id="export-to" label="Last day (UTC), included">
                 <Input
+                  className={TOUCH_FIELD_CLASS}
                   id="export-to"
                   type="date"
                   value={to ?? ''}
@@ -115,7 +119,7 @@ export function ExportView() {
                     if (isExportStepId(value)) viewModel.setStep(value);
                   }}
                 >
-                  <SelectTrigger id="export-step">
+                  <SelectTrigger id="export-step" className={TOUCH_FIELD_CLASS}>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -136,7 +140,7 @@ export function ExportView() {
                     if (isCsvFormatId(value)) viewModel.setFormat(value);
                   }}
                 >
-                  <SelectTrigger id="export-format">
+                  <SelectTrigger id="export-format" className={TOUCH_FIELD_CLASS}>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -152,9 +156,9 @@ export function ExportView() {
 
             <div className="flex flex-col gap-2">
               <span className="text-sm font-medium text-foreground">Data (average per step)</span>
-              <CheckboxGroup orientation="horizontal" aria-label="Data to export">
+              <CheckboxGroup orientation="horizontal" aria-label="Data to export" className="flex-wrap gap-x-4">
                 {EXPORT_METRICS.map((metric) => (
-                  <CheckboxItem key={metric.id}>
+                  <CheckboxItem key={metric.id} className={TOUCH_LINE_CLASS}>
                     <CheckboxItemControl
                       checked={metrics.includes(metric.id)}
                       onCheckedChange={(isChecked) => viewModel.toggleMetric(metric.id, isChecked)}
@@ -177,9 +181,18 @@ export function ExportView() {
                 </Alert>
               )}
               <div className="flex flex-wrap items-center gap-4">
-                <Button onClick={viewModel.exportCsv} disabled={problem !== null || isRunning}>
+                <Button
+                  className={TOUCH_FIELD_CLASS}
+                  onClick={viewModel.exportCsv}
+                  disabled={problem !== null || isRunning}
+                >
                   {isRunning ? 'Exporting…' : 'Export CSV'}
                 </Button>
+                {isRunning && (
+                  <Button variant="outline" className={TOUCH_FIELD_CLASS} onClick={viewModel.cancelExport}>
+                    Cancel
+                  </Button>
+                )}
                 <RunStatus run={run} />
               </div>
             </div>
@@ -211,6 +224,13 @@ function RunStatus({ run }: { run: ExportRun }) {
     return (
       <span className="text-sm text-muted-foreground" aria-live="polite">
         {`${run.rowCount.toLocaleString('en-US')} rows exported to ${run.fileName}.`}
+      </span>
+    );
+  }
+  if (run.status === 'cancelled') {
+    return (
+      <span className="text-sm text-muted-foreground" aria-live="polite">
+        Export cancelled. No file was downloaded.
       </span>
     );
   }
