@@ -1,7 +1,7 @@
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@cognite/aura/components/hover-card';
 
 import { formatPercent } from './oeeFormat';
-import { oeeLevel } from './oeeKpi';
+import { siteMapLevel } from './oeeKpi';
 import type { OeeLevel } from './oeeKpi';
 import { getSiteCoordinates, MAP_VIEW_BOX, toMapPosition } from './siteLocations';
 import { SiteLowestUnits } from './SiteLowestUnits';
@@ -17,9 +17,9 @@ const LEVEL_COLORS: Record<OeeLevel, string> = {
 };
 
 const LEGEND: { level: OeeLevel; label: string }[] = [
-  { level: 'critical', label: 'Site OEE below 70%' },
-  { level: 'warning', label: '70% to 85%' },
-  { level: 'good', label: '85% and above' },
+  { level: 'critical', label: 'Site OEE below 80%' },
+  { level: 'warning', label: '80% to 90%' },
+  { level: 'good', label: '90% and above' },
 ];
 
 const VIEW_BOX = `${MAP_VIEW_BOX.x} ${MAP_VIEW_BOX.y} ${MAP_VIEW_BOX.width} ${MAP_VIEW_BOX.height}`;
@@ -67,7 +67,7 @@ function SiteMarker({ overview, onOpenSite }: SiteMarkerProps) {
   // A site without known coordinates is still listed in the table below the map.
   if (coordinates === null) return null;
   const { left, top } = toMapPosition(coordinates);
-  const level = oeeLevel(summary?.meanOee);
+  const level = siteMapLevel(summary?.meanOee);
 
   return (
     <HoverCard openDelay={80} closeDelay={80}>

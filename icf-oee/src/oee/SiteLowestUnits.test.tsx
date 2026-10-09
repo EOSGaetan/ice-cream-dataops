@@ -27,6 +27,18 @@ describe(SiteLowestUnits.name, () => {
     ]);
   });
 
+  it.each([
+    { oee: 0.75, level: '(below 80%)' },
+    { oee: 0.85, level: '(80% to 90%)' },
+    { oee: 0.95, level: '(90% and above)' },
+  ])('gives the site OEE the level of its map marker: $level', ({ oee, level }) => {
+    const summary = summarizeSite([{ ...UNITS[0], oee }]);
+
+    render(<SiteLowestUnits overview={{ ...OSLO, summary, lowestUnits: [] }} />);
+
+    expect(screen.getByText(level, { exact: false })).toBeInTheDocument();
+  });
+
   it('says when the units are loading', () => {
     render(<SiteLowestUnits overview={{ ...OSLO, summary: null, lowestUnits: [], isLoading: true }} />);
 

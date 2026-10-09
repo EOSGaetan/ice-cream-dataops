@@ -1,3 +1,7 @@
+import { Badge } from '@cognite/aura/components/badge';
+
+import { formatPercent } from './oeeFormat';
+import { siteMapLevel } from './oeeKpi';
 import { OeeValue } from './OeeValue';
 import type { SiteOverview } from './useOeeViewModel';
 
@@ -13,7 +17,7 @@ export function SiteLowestUnits({ overview }: SiteLowestUnitsProps) {
     <div className="flex flex-col gap-3 text-sm">
       <div className="flex items-center justify-between gap-3">
         <span className="font-medium text-foreground">{site.name}</span>
-        {summary !== null && <OeeValue ratio={summary.meanOee} />}
+        {summary !== null && <SiteOee ratio={summary.meanOee} />}
       </div>
       {isLoading && <span className="text-muted-foreground">Loading units…</span>}
       {error !== null && <span className="text-muted-foreground">{error}</span>}
@@ -37,4 +41,36 @@ export function SiteLowestUnits({ overview }: SiteLowestUnitsProps) {
       )}
     </div>
   );
+}
+
+/** The OEE of the site, in the colour of its marker on the map. */
+function SiteOee({ ratio }: { ratio: number | null }) {
+  const text = formatPercent(ratio);
+  const level = siteMapLevel(ratio);
+
+  if (level === 'critical') {
+    return (
+      <Badge variant="error">
+        {text}
+        <span className="sr-only"> (below 80%)</span>
+      </Badge>
+    );
+  }
+  if (level === 'warning') {
+    return (
+      <Badge variant="warning">
+        {text}
+        <span className="sr-only"> (80% to 90%)</span>
+      </Badge>
+    );
+  }
+  if (level === 'good') {
+    return (
+      <Badge variant="success">
+        {text}
+        <span className="sr-only"> (90% and above)</span>
+      </Badge>
+    );
+  }
+  return <span>{text}</span>;
 }

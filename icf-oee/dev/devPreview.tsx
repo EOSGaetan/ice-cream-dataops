@@ -36,10 +36,10 @@ const service: OeeService = {
   listUnits: (siteId) => {
     // Each site gets a different level, so the map shows the three marker colours.
     const siteIndex = SITES.findIndex((site) => site.externalId === siteId);
-    const penalty = siteIndex % 3 === 0 ? 0.3 : siteIndex % 3 === 1 ? 0.12 : 0;
+    const penalty = siteIndex % 3 === 0 ? 0.3 : siteIndex % 3 === 1 ? 0.03 : -0.08;
     return Promise.resolve(
       NAMES.map((name, index) => {
-        const oee = Math.max(0, OEES[(index + siteIndex) % OEES.length] - penalty);
+        const oee = Math.min(1, Math.max(0, OEES[(index + siteIndex) % OEES.length] - penalty));
         return {
           externalId: `${siteId.slice(0, 2).toUpperCase()}PR${name.replace(/[^A-Z]/g, '')}${100 + index}`,
           name,

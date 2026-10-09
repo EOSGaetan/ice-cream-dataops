@@ -1,7 +1,30 @@
 import { describe, expect, it } from 'vitest';
 
-import { lowestUnits, oeeLevel, summarizeSite } from './oeeKpi';
+import { lowestUnits, oeeLevel, siteMapLevel, summarizeSite } from './oeeKpi';
 import type { UnitOee } from './types';
+
+describe(siteMapLevel.name, () => {
+  it('is critical (red) below 80%', () => {
+    expect(siteMapLevel(0)).toBe('critical');
+    expect(siteMapLevel(0.799)).toBe('critical');
+  });
+
+  it('is a warning (orange) from 80% to below 90%', () => {
+    expect(siteMapLevel(0.8)).toBe('warning');
+    expect(siteMapLevel(0.899)).toBe('warning');
+  });
+
+  it('is good (green) from 90%', () => {
+    expect(siteMapLevel(0.9)).toBe('good');
+    expect(siteMapLevel(1)).toBe('good');
+  });
+
+  it('is unknown without a value', () => {
+    expect(siteMapLevel(null)).toBe('unknown');
+    expect(siteMapLevel(undefined)).toBe('unknown');
+    expect(siteMapLevel(Number.NaN)).toBe('unknown');
+  });
+});
 
 describe(oeeLevel.name, () => {
   it('is critical below 70%', () => {

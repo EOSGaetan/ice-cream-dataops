@@ -869,7 +869,28 @@ commitée ni déployée.**
     `0.0.6 is now PUBLISHED`, `ACTIVE`, `Superseded 0.0.5 → PUBLISHED`. Commitée dans le dépôt
     de l'app (`5d1ebbe`, 32 fichiers). Pas de déploiement en prod. Clone GitHub
     `C:\dev\cdf-bootcamp-33` préparé (copie de `icf-oee/` et de ce journal, fichiers
-    indexés) : **commit et push à faire par moi**, avec la commande du piège 403 ci-dessus.
+    indexés) ; commit et push faits par moi le 2026-10-09 avec la commande du piège 403
+    ci-dessus (`d7a7428` ; contrôle après le push : `origin/main` au même commit, arbre
+    propre, 394 fichiers, aucun `.env`).
+- **Version 0.0.7 écrite le 2026-10-09** (à ma demande, après avoir parcouru l'app : « tout est
+  good, juste la map »).
+  - Code couleur de la carte, pour l'OEE d'un site : **rouge sous 80 %, orange de 80 à 90 %,
+    vert à partir de 90 %** (c'était 70 / 85). Concerne les points de la carte, la légende et
+    la valeur du site dans la bulle. Les seuils des unités (70 % alerte, 85 %) ne changent
+    pas : le tableau sous la carte et les autres onglets gardent leurs couleurs.
+  - `icf-oee/App-Brief.md` rédigé par l'assistant (fiche de l'app pour la certification), **à
+    relire par moi** : le client, le niveau (Tier 1), l'utilisateur, le problème et les
+    critères de succès sont des propositions ; « aucun contact avec un vrai utilisateur » y
+    est écrit tel quel. Nombre d'utilisateurs, valeur métier et jalons laissés vides.
+  - Revue de design n°1 (`icf-oee/reviews/design-review/feedback-round-1/`) : moyenne **4,1**
+    (« Good »), notes proposées par l'assistant, parcours des tâches fait par moi. Q6 vaut 5
+    parce que l'app est en lecture seule (règle de la revue). Ce n'est pas une note de Cognite.
+  - Contrôles : 212 tests, couverture 96,8 % des lignes, lint OK.
+  - **Déployée en test puis activée le 2026-10-09** après ma validation du brouillon :
+    `0.0.7 is now PUBLISHED`, `ACTIVE`, `Superseded 0.0.6 → PUBLISHED`. Commitée dans le dépôt
+    de l'app : `4767181` (code couleur de la carte) et `7e54457` (fiche de l'app et revue de
+    design). Pas de déploiement en prod. Clone GitHub `C:\dev\cdf-bootcamp-33` préparé (copie
+    de `icf-oee/` et de ce journal, fichiers indexés) : **commit et push à faire par moi**.
 - Clone GitHub `C:\dev\cdf-bootcamp-33` : `icf-oee/` y était resté au squelette d'origine ;
   remis à niveau le 2026-10-06 par l'assistant (copie + `git add`), avec
   `flows_app_developer.Group.yaml` et ce journal. Commit et push à faire par moi.

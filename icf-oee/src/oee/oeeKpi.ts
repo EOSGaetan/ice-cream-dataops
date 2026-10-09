@@ -1,4 +1,4 @@
-import { OEE_ALERT_THRESHOLD, OEE_WARNING_THRESHOLD } from './types';
+import { OEE_ALERT_THRESHOLD, OEE_WARNING_THRESHOLD, SITE_MAP_GREEN_FROM, SITE_MAP_RED_BELOW } from './types';
 import type { UnitOee } from './types';
 
 export type OeeLevel = 'critical' | 'warning' | 'good' | 'unknown';
@@ -8,6 +8,17 @@ export function oeeLevel(ratio: number | null | undefined): OeeLevel {
   if (ratio === null || ratio === undefined || !Number.isFinite(ratio)) return 'unknown';
   if (ratio < OEE_ALERT_THRESHOLD) return 'critical';
   if (ratio < OEE_WARNING_THRESHOLD) return 'warning';
+  return 'good';
+}
+
+/**
+ * The level of a site on the map: critical (red) below 80%, warning (orange) from 80% to below
+ * 90%, good (green) from 90%. Stricter than the level of a unit, which follows the alert threshold.
+ */
+export function siteMapLevel(ratio: number | null | undefined): OeeLevel {
+  if (ratio === null || ratio === undefined || !Number.isFinite(ratio)) return 'unknown';
+  if (ratio < SITE_MAP_RED_BELOW) return 'critical';
+  if (ratio < SITE_MAP_GREEN_FROM) return 'warning';
   return 'good';
 }
 

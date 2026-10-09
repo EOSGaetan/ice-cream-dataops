@@ -74,6 +74,9 @@ describe(OeePage.name, () => {
       expect(oslo).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /^Houston: site OEE 80\.0%/ })).toBeInTheDocument();
       expect(screen.getByText('2 sites, coloured by the mean of the latest OEE of their units.')).toBeInTheDocument();
+      expect(screen.getByText('Site OEE below 80%')).toBeInTheDocument();
+      expect(screen.getByText('80% to 90%')).toBeInTheDocument();
+      expect(screen.getByText('90% and above')).toBeInTheDocument();
     });
 
     it('summarizes the same figures in a table, one row per site', async () => {

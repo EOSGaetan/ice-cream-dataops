@@ -89,7 +89,9 @@
 - FR-012: System MUST offer the trend time frames 1W (7 days, hourly averages), 1M (30 days,
   4-hour averages) and 1Y (365 days, daily averages), all ending at the latest OEE datapoint.
 - FR-013: System MUST offer an Overview tab with a world map of the sites: one marker per
-  site, coloured by the level of the mean of the latest OEE of its units (FR-010 thresholds).
+  site, coloured by the mean of the latest OEE of its units with the colour code of the map:
+  red below 80%, orange from 80% to below 90%, green from 90%. The site OEE in the hover card
+  follows the same code. The thresholds of the units (FR-010) are unchanged.
 - FR-014: System MUST show, when a site marker is hovered, the site OEE and the three units
   with the lowest latest OEE, and MUST show the same figures for every site in a table below
   the map, lowest site OEE first.

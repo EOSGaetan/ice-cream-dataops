@@ -8,6 +8,11 @@ export const OEE_ALERT_THRESHOLD = 0.7;
 /** Below this OEE a unit is worth watching. */
 export const OEE_WARNING_THRESHOLD = 0.85;
 
+/** The colour code of the map, for the OEE of a whole site: red below, orange up to the next one. */
+export const SITE_MAP_RED_BELOW = 0.8;
+/** From this site OEE the marker of the map is green. */
+export const SITE_MAP_GREEN_FROM = 0.9;
+
 export const OEE_METRICS =['oee', 'quality', 'performance', 'availability'] as const;
 export type OeeMetric = (typeof OEE_METRICS)[number];
 
