@@ -17,8 +17,10 @@ export function oeeLevel(ratio: number | null | undefined): OeeLevel {
  */
 export function siteMapLevel(ratio: number | null | undefined): OeeLevel {
   if (ratio === null || ratio === undefined || !Number.isFinite(ratio)) return 'unknown';
-  if (ratio < SITE_MAP_RED_BELOW) return 'critical';
-  if (ratio < SITE_MAP_GREEN_FROM) return 'warning';
+  // The level follows the value as it is shown, with one decimal: a site shown as "80.0%" is not below 80%.
+  const shown = Math.round(ratio * 1000) / 1000;
+  if (shown < SITE_MAP_RED_BELOW) return 'critical';
+  if (shown < SITE_MAP_GREEN_FROM) return 'warning';
   return 'good';
 }
 

@@ -19,6 +19,13 @@ describe(siteMapLevel.name, () => {
     expect(siteMapLevel(1)).toBe('good');
   });
 
+  it('follows the value as it is shown, with one decimal', () => {
+    // 79.985% is shown as "80.0%": it is not below 80%.
+    expect(siteMapLevel(0.79985)).toBe('warning');
+    expect(siteMapLevel(0.7994)).toBe('critical');
+    expect(siteMapLevel(0.89996)).toBe('good');
+  });
+
   it('is unknown without a value', () => {
     expect(siteMapLevel(null)).toBe('unknown');
     expect(siteMapLevel(undefined)).toBe('unknown');

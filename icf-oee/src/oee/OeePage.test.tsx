@@ -93,6 +93,9 @@ describe(OeePage.name, () => {
       expect(rows.some((text) => text.startsWith('Oslo'))).toBe(true);
       expect(rows.some((text) => text.startsWith('Houston'))).toBe(true);
       expect(rows[0]).toContain('80.0%');
+      // The site OEE has the level of the map (80% to 90%), the unit keeps its own (below 85%).
+      expect(rows[0]).toContain('80.0% (80% to 90%)');
+      expect(rows[0]).toContain('77.2% (below 85%)');
       expect(rows[0]).toContain('77.2%');
       expect(rows[0]).toContain('Balance Tank');
       expect(rows[0]).toContain('82.8%');

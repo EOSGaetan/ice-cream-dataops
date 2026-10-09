@@ -3,6 +3,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 
 import { useTableHeights } from './oeeDeps';
 import { OeeValue } from './OeeValue';
+import { SiteOeeValue } from './SiteOeeValue';
 import type { UnitOee } from './types';
 import type { SiteOverview } from './useOeeViewModel';
 
@@ -18,7 +19,8 @@ const COLUMNS: ColumnDef<SiteOverview>[] = [
     accessorFn: (row) => row.summary?.meanOee ?? undefined,
     sortUndefined: 'last',
     size: 120,
-    cell: ({ row }) => (row.original.summary === null ? '…' : <OeeValue ratio={row.original.summary.meanOee} />),
+    // The OEE of a site follows the colour code of the map; the units keep their own thresholds.
+    cell: ({ row }) => (row.original.summary === null ? '…' : <SiteOeeValue ratio={row.original.summary.meanOee} />),
   },
   { id: 'units', header: 'Units', accessorFn: (row) => row.summary?.unitCount ?? undefined, sortUndefined: 'last', size: 80 },
   {

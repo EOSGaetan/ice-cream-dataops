@@ -922,6 +922,24 @@ commitée ni déployée.**
     `0.0.8 is now PUBLISHED`, `ACTIVE`, `Superseded 0.0.7 → PUBLISHED`. Commitée dans le dépôt
     de l'app (`7da256b`, 20 fichiers). Pas de déploiement en prod. Clone GitHub
     `C:\dev\cdf-bootcamp-33` préparé (copie de `icf-oee/` et de ce journal, fichiers
+    indexés) ; commit et push faits par moi le 2026-10-09 (`b45c673` ; contrôle après le
+    push : `origin/main` au même commit, arbre propre, 404 fichiers, aucun `.env`).
+- **Version 0.0.9 écrite le 2026-10-09** (à ma demande : aligner le tableau sous la carte sur
+  les seuils 80 et 90).
+  - Dans le tableau « Lowest OEE by site », la colonne « Site OEE » suit maintenant le code
+    couleur de la carte : rouge sous 80 %, orange de 80 à 90 %, vert à partir de 90 %. Les
+    valeurs des unités du même tableau (les trois plus basses) gardent les seuils des unités
+    (70 % et 85 %), comme dans la bulle de la carte.
+  - Le niveau d'un site se lit sur la valeur affichée, à une décimale : un site affiché
+    « 80.0% » n'est pas classé « sous 80 % » (sans cela, 79,985 % s'affichait 80.0% en rouge).
+  - Reste différent : la tuile « Site OEE » de l'onglet Site et le tableau des sites du
+    rapport hebdomadaire utilisent encore les seuils 70 % et 85 %.
+  - Contrôles : 257 tests, couverture 97,2 % des lignes, lint OK ; rendu contrôlé dans
+    l'aperçu local.
+  - **Déployée en test puis activée le 2026-10-09** après ma validation du brouillon :
+    `0.0.9 is now PUBLISHED`, `ACTIVE`, `Superseded 0.0.8 → PUBLISHED`. Commitée dans le dépôt
+    de l'app (`6ccbff6`, 8 fichiers). Pas de déploiement en prod. Clone GitHub
+    `C:\dev\cdf-bootcamp-33` préparé (copie de `icf-oee/` et de ce journal, fichiers
     indexés) : **commit et push à faire par moi**.
 - Clone GitHub `C:\dev\cdf-bootcamp-33` : `icf-oee/` y était resté au squelette d'origine ;
   remis à niveau le 2026-10-06 par l'assistant (copie + `git add`), avec

@@ -94,7 +94,9 @@
 - FR-013: System MUST offer an Overview tab with a world map of the sites: one marker per
   site, coloured by the mean of the latest OEE of its units with the colour code of the map:
   red below 80%, orange from 80% to below 90%, green from 90%. The site OEE in the hover card
-  follows the same code. The thresholds of the units (FR-010) are unchanged.
+  and in the table under the map follows the same code, applied to the value as it is shown
+  (one decimal): a site shown as "80.0%" is not below 80%. The thresholds of the units
+  (FR-010) are unchanged, including the unit values of that table.
 - FR-014: System MUST show, when a site marker is hovered, the site OEE and the three units
   with the lowest latest OEE, and MUST show the same figures for every site in a table below
   the map, lowest site OEE first.
