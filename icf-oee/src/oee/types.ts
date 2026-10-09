@@ -87,7 +87,7 @@ export function getTrendRange(id: TrendRangeId): TrendRange {
 }
 
 /** The tabs of the app. */
-export const OEE_VIEWS = ['overview', 'units', 'site'] as const;
+export const OEE_VIEWS = ['overview', 'units', 'site', 'export'] as const;
 export type OeeView = (typeof OEE_VIEWS)[number];
 
 export function isOeeView(value: unknown): value is OeeView {
@@ -106,4 +106,16 @@ export type UnitPeriodStats = {
   quality: number | null;
   performance: number | null;
   availability: number | null;
+};
+
+/** The part of the unit statistics that ranks the units: read first. */
+export type UnitOeeStats = Pick<UnitPeriodStats, 'externalId' | 'meanOee' | 'periods' | 'periodsBelowAlert'>;
+
+/** The part of the unit statistics that explains a low OEE: read after the ranking is shown. */
+export type UnitComponentMeans = Pick<UnitPeriodStats, 'externalId' | 'quality' | 'performance' | 'availability'>;
+
+/** A unit and the site it belongs to. */
+export type SiteUnit = {
+  site: Site;
+  unit: UnitOee;
 };

@@ -50,7 +50,7 @@ export function SitesMap({ sites, onOpenSite }: SitesMapProps) {
             {label}
           </li>
         ))}
-        <li>Hover a site to see its three lowest units; select it to open the site.</li>
+        <li>Hover a site to see its three lowest units, or read them in the table below. Select a site to open it.</li>
       </ul>
     </div>
   );
@@ -73,7 +73,7 @@ function SiteMarker({ overview, onOpenSite }: SiteMarkerProps) {
     <HoverCard openDelay={80} closeDelay={80}>
       <HoverCardTrigger
         render={<button type="button" />}
-        className="absolute flex size-7 -translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full outline-none focus-visible:shadow-focus-ring"
+        className="absolute flex size-7 -translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full outline-none hover:bg-foreground/10 focus-visible:shadow-focus-ring pointer-coarse:size-11"
         style={{ left: `${left}%`, top: `${top}%` }}
         aria-label={describeMarker(overview)}
         onClick={() => onOpenSite(site.externalId)}

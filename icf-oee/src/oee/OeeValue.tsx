@@ -16,6 +16,7 @@ export function OeeValue({ ratio }: OeeValueProps) {
     return (
       <Badge variant="error" title="Below the 70% alert threshold">
         {text}
+        <span className="sr-only"> (below the 70% alert threshold)</span>
       </Badge>
     );
   }
@@ -23,6 +24,7 @@ export function OeeValue({ ratio }: OeeValueProps) {
     return (
       <Badge variant="warning" title="Below 85%">
         {text}
+        <span className="sr-only"> (below 85%)</span>
       </Badge>
     );
   }

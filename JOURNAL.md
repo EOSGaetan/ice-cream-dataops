@@ -5,6 +5,13 @@ sans relire toute la conversation. Les règles et les valeurs de référence son
 `AGENTS.md` ; ce fichier dit seulement **où on en est** et **quoi faire ensuite**.
 Aucun secret ici : ils restent dans `.env`.
 
+## Organisation des dossiers (8 octobre 2026)
+
+Le projet complet a été déplacé dans `Bootcam_ice_cream_factory/`. Ouvrir ce dossier
+dans VS Code et lancer les commandes `cdf` depuis celui-ci, où se trouvent `cdf.toml`
+et les fichiers de configuration. Le dossier voisin `test_hq_dev/` est créé et prêt
+pour le travail à venir.
+
 ## Où on en est (lundi 5 octobre 2026)
 
 Jour 1 — Data Foundations : **déployé en test**. Un `cdf deploy --dry-run` de contrôle
@@ -752,13 +759,81 @@ commitée ni déployée.**
     Rendu contrôlé sur la page de prévisualisation locale.
   - **Déployée en test puis activée le 2026-10-06** après ma validation du brouillon :
     `0.0.4 is now PUBLISHED`, `ACTIVE`, `Superseded 0.0.3 → PUBLISHED`. Commitée dans le dépôt
-    de l'app (`90acb43`) ; copiée dans le clone GitHub avec `git add`, commit et push à faire
-    par moi. Rendu vérifié dans Fusion test avec les vraies données : 30 types, 628 unités ;
+    de l'app (`90acb43`) ; poussée sur GitHub par moi (`0a1549b`, 19:36 ; contrôle après le
+    push : `origin/main` au même commit, arbre propre, 364 fichiers, aucun `.env`). Rendu vérifié dans Fusion test avec les vraies données : 30 types, 628 unités ;
     sur 1W les plus problématiques sont Hardening Tunnel (20,9 % du temps sous 70 %), Finished
     goods (20,3 %) et Chocolate Spray (20,2 %).
   - Point faible : dans Fusion l'onglet met environ 20 à 25 s à s'afficher la première fois
     (une quarantaine de requêtes pour les unités, puis une trentaine pour les statistiques),
     contre 1 s pour les seules statistiques hors navigateur. Cause non cherchée.
+- **Version 0.0.5 écrite le 2026-10-06 : onglet « Export »** (export CSV ciblé, pour qu'un
+  ingénieur fasse sa propre analyse dans Excel).
+  - Choix : site (ou tous), type d'unité (ou tous), grandeurs (OEE, quality, performance,
+    availability, off-spec), premier et dernier jour (UTC, dernier jour inclus ; par défaut les
+    7 jours qui finissent au jour de la dernière valeur), pas (1 min, 5 min, 15 min, 1 h, 4 h,
+    1 jour), format (Excel français `;` et virgule décimale par défaut, ou international).
+  - Fichier : une ligne par unité et par pas (`site`, `unit_type`, `unit`, `time_utc`, puis
+    une colonne par grandeur), UTF-8 avec BOM, nommé d'après les choix. Fabriqué dans le
+    navigateur ; l'app reste en lecture seule.
+  - Avant de lancer, la page annonce unités, pas, lignes et requêtes ; refus au-delà de
+    200 000 lignes ou 250 requêtes. Pendant l'export : avancement requête par requête.
+  - Requêtes : moyennes par pas, 100 séries et 10 000 agrégats au plus par requête ; une
+    période de plus de 10 000 pas est découpée en fenêtres. Vérifié en lecture seule sur le
+    test avec le vrai code : un type dans le monde sur 7 jours à 15 min = 2 requêtes, 8 355
+    lignes, 0,5 Mo ; toutes les unités sur 7 jours à 1 h = 43 requêtes en 1,7 s, 73 840 lignes,
+    5,9 Mo.
+  - Le cadre de Fusion n'a pas d'attribut `sandbox` : les téléchargements n'y sont pas
+    interdits. **Le téléchargement réel dans Fusion reste à essayer par moi.**
+  - Contrôles : 160 tests, couverture 96 % des lignes, lint et build OK (JavaScript 1,15 Mo).
+    Les choix de l'export ne sont pas gardés dans l'adresse.
+  - **Pas encore déployée** : l'envoi en test lancé le 2026-10-06 s'est arrêté sur
+    `Login timeout - no response received within 5 minutes` (la CLI n'attend la connexion dans
+    le navigateur que 5 minutes). À relancer : `npm --prefix icf-oee run deploy --
+    -d cdf-bootcamp-33-test`. Non commitée. « Custom apps » ouvre toujours la 0.0.4.
+- **Revues qualité Flows et corrections, le 2026-10-09** (à ma demande, après avoir constaté
+  que les règles qualité Flows n'avaient pas été suivies). Tout est dans la 0.0.5, toujours
+  **déployée en test puis activée le 2026-10-09** après ma validation du brouillon :
+  `0.0.5 is now PUBLISHED`, `ACTIVE`, `Superseded 0.0.4 → PUBLISHED`. Commitée dans le dépôt
+  de l'app en deux commits : `d24de5e` (code, 45 fichiers) et `67bf143` (rapports de revue).
+  Pas de déploiement en prod. Clone GitHub `C:\dev\cdf-bootcamp-33` préparé le 2026-10-09
+  (copie de `icf-oee/` et de ce journal, 54 fichiers indexés, aucun `.env` ni certificat) :
+  **commit et push à faire par moi**. La commande de déploiement se lance depuis `icf-oee` (`npm run deploy --
+  -d cdf-bootcamp-33-test`) ; lancée depuis `Cognite`, elle échoue sur `ENOENT package.json`.
+  - Revue de code n°1 (`icf-oee/reviews/code-review/feedback-round-1/`) : 3 points bloquants
+    (un fichier de `src/` exclu de la couverture, couverture mesurée seulement sur les fichiers
+    testés, un fichier inutilisé), 7 points « à corriger », 4 mineurs.
+  - Revue de code n°2 (`feedback-round-2/`) après corrections : **0 bloquant**, 3 « à corriger »
+    ouverts, 4 mineurs. C'est une auto-revue faite par l'assistant, pas une revue de Cognite.
+  - Corrigé :
+    - Couverture mesurée sur tout `src/` : 187 tests, 96,7 % des lignes. La page de
+      prévisualisation est passée dans `icf-oee/dev/` (hors `src/`, hors build).
+    - Lecture des unités : une seule lecture pour tous les sites (`listAllUnits`) au lieu d'une
+      par site. Vérifié en lecture seule sur le test : mêmes 628 unités, **13 requêtes au lieu
+      de 59**. Onglet Unit types : 26 requêtes avant d'afficher le classement (environ 90
+      avant), puis quality / performance / availability arrivent dans leurs colonnes.
+      Onglet Overview : 14 requêtes au lieu de 59.
+    - Graphiques chargés à la demande : JavaScript principal 756 ko au lieu de 1,15 Mo.
+    - Message « The page could not be displayed » avec « Try again » au lieu d'une page blanche
+      si l'affichage plante.
+    - Téléphone (375 px) : pas de défilement horizontal de la page, onglets, raccourcis de
+      période et points de la carte à 44 px sur écran tactile, noms raccourcis dans le
+      graphique des types.
+    - Accessibilité : zoom autorisé, niveau d'OEE donné aussi en texte (pas seulement par la
+      couleur), gris du texte secondaire foncé d'un cran (contraste 3,7 → 5,8). Contrôle
+      axe-core dans le navigateur sur les 4 onglets : 0 défaut sur Unit types, Site, Export.
+      Le même contrôle est dans les tests (`OeePage.a11y.test.tsx`).
+    - Dépendances : Vitest 4.1.11 (plus d'alerte « moderate »), `clsx` et `tailwind-merge`
+      retirés, `axe-core` ajouté en dépendance de développement.
+  - Restent ouverts : `@cognite/aura` a une version majeure de retard (0.3.5 → 1.x, à faire à
+    part avec contrôle visuel dans Fusion) ; nommage des fichiers différent de la convention
+    Flows ; sur la carte, les points des sites européens voisins se chevauchent (le tableau
+    sous la carte offre la même action).
+  - **Pas fait** : la revue de design (`flows-design-review`) n'est pas notée, elle exige que
+    je déroule moi-même les tâches de l'app ; `App-Brief.md` (`flows-app-brief`) n'existe pas ;
+    rien n'a été contrôlé dans Fusion (0.0.5 non déployée), ni sur un vrai téléphone, ni avec
+    un lecteur d'écran.
+  - Prévisualisation locale : `.claude/launch.json` est maintenant dans le dossier `Cognite`
+    (racine de la session), la page est `https://localhost:3001/dev-preview.html`.
 - Clone GitHub `C:\dev\cdf-bootcamp-33` : `icf-oee/` y était resté au squelette d'origine ;
   remis à niveau le 2026-10-06 par l'assistant (copie + `git add`), avec
   `flows_app_developer.Group.yaml` et ce journal. Commit et push à faire par moi.

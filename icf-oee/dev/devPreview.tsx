@@ -4,13 +4,15 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import ReactDOM from 'react-dom/client';
 
-import { OeeDepsContext } from './oee/oeeDeps';
-import { OeePage } from './oee/OeePage';
-import type { OeeService } from './oee/oeeService';
-import { OeeStateProvider } from './oee/OeeStateProvider';
-import { getTrendRange } from './oee/types';
+import { downloadCsvFile } from '../src/oee/downloadFile';
+import { OeeDepsContext } from '../src/oee/oeeDeps';
+import { getExportStep } from '../src/oee/oeeExport';
+import { OeePage } from '../src/oee/OeePage';
+import type { OeeService } from '../src/oee/oeeService';
+import { OeeStateProvider } from '../src/oee/OeeStateProvider';
+import { getTrendRange } from '../src/oee/types';
 
-import './styles.css';
+import '../src/styles.css';
 
 const END = Date.UTC(2026, 9, 5, 19, 0);
 const SITES = [
@@ -49,6 +51,12 @@ const service: OeeService = {
       })
     );
   },
+  listAllUnits: async () => {
+    const bySite = await Promise.all(
+      SITES.map(async (site) => (await service.listUnits(site.externalId)).map((unit) => ({ site, unit })))
+    );
+    return bySite.flat();
+  },
   getOeeTrend: (_unit, end, rangeId) => {
     const range = getTrendRange(rangeId);
     const stepMs = range.id === '1w' ? 3600000 : range.id === '1m' ? 4 * 3600000 : 24 * 3600000;
@@ -60,7 +68,7 @@ const service: OeeService = {
       }))
     );
   },
-  getUnitPeriodStats: (unitIds) =>
+  getUnitOeeStats: (unitIds) =>
     Promise.resolve(
       unitIds.map((externalId, index) => {
         // The trailing number of the fake external id is the unit type: same type, similar figures.
@@ -71,12 +79,43 @@ const service: OeeService = {
           meanOee: 1 - share * 0.8,
           periods: 160,
           periodsBelowAlert: Math.round(share * 160),
-          quality: 1 - share * 0.3,
-          performance: 1 - share * 0.2,
-          availability: 1 - share * 0.4,
         };
       })
     ),
+  getUnitComponentMeans: (unitIds) =>
+    // Later than the ranking, to show the columns filling in afterwards.
+    new Promise((resolve) => {
+      window.setTimeout(() => {
+        resolve(
+          unitIds.map((externalId) => {
+            const share = Math.max(0, 0.45 - (Number(externalId.slice(-3)) - 100) * 0.03);
+            return {
+              externalId,
+              quality: 1 - share * 0.3,
+              performance: 1 - share * 0.2,
+              availability: 1 - share * 0.4,
+            };
+          })
+        );
+      }, 1500);
+    }),
+  exportAverages: ({ unitExternalIds, metrics, startMs, endMs, stepId }, onProgress) => {
+    const stepMs = getExportStep(stepId).stepMs;
+    const count = Math.ceil((endMs - startMs) / stepMs);
+    onProgress?.(1, 1);
+    return Promise.resolve(
+      unitExternalIds.flatMap((unitExternalId, unitIndex) =>
+        metrics.map((metric, metricIndex) => ({
+          unitExternalId,
+          metric,
+          points: Array.from({ length: count }, (_, step) => ({
+            timestamp: startMs + step * stepMs,
+            value: Math.max(0, 0.95 - metricIndex * 0.02 - (unitIndex % 5) * 0.05 - (step % 24 === 20 ? 0.9 : 0)),
+          })),
+        }))
+      )
+    );
+  },
 };
 
 const params = new URLSearchParams(window.location.search);
@@ -85,7 +124,7 @@ const queryClient = new QueryClient();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <QueryClientProvider client={queryClient}>
-    <OeeDepsContext.Provider value={{ service, syncState: () => undefined }}>
+    <OeeDepsContext.Provider value={{ service, syncState: () => undefined, downloadFile: downloadCsvFile }}>
       <OeeStateProvider initialState={initialState}>
         <OeePage />
       </OeeStateProvider>

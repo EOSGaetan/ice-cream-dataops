@@ -17,16 +17,18 @@ export function SitesOverview({ overview, onOpenSite }: SitesOverviewProps) {
   if (overview.items.length === 0) {
     return <Empty title="No sites" description="The project has no asset without a parent." />;
   }
-  const loadingCount = overview.items.filter((site) => site.isLoading).length;
+  const isLoadingUnits = overview.items.some((site) => site.isLoading);
+  const unitsError = overview.items.find((site) => site.error !== null)?.error ?? null;
 
   return (
     <div className="flex flex-col gap-6">
+      {unitsError !== null && <ErrorMessage message={unitsError} />}
       <Card>
         <CardHeader>
           <CardTitle as="h2">Sites</CardTitle>
           <CardDescription>
-            {loadingCount > 0
-              ? `Loading the units of ${loadingCount} of ${overview.items.length} sites…`
+            {isLoadingUnits
+              ? `Loading the units of the ${overview.items.length} sites…`
               : `${overview.items.length} sites, coloured by the mean of the latest OEE of their units.`}
           </CardDescription>
         </CardHeader>

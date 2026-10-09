@@ -15,6 +15,8 @@
    whether a low value is a one-off or a recurring drop.
 3. As an operations manager, I want to see which kind of unit causes the most problems across
    all sites, so that I can prioritise an improvement that pays off worldwide.
+4. As an engineer, I want to export the data I choose (which units, which figures, which
+   period, which step) to a file, so that I can run my own analysis in Excel.
 
 ### Acceptance Scenarios
 
@@ -30,6 +32,15 @@
   OEE, mean quality, performance and availability, and the site where it is the lowest.
 - Given the Unit types tab, when I select a type, then its units are listed site by site with
   their mean OEE and time below 70%; selecting one opens it in the Site tab.
+- Given the Export tab, when I choose a site or all sites, a unit type or all types, the
+  figures (OEE, quality, performance, availability, off-spec items), the first and last day and
+  the step (1 minute to 1 day), then the page says how many units, rows and requests the
+  export represents before I start it.
+- Given a valid choice, when I select Export CSV, then a CSV file is downloaded with one row
+  per unit and per step (site, unit type, unit, time in UTC, one column per figure), named
+  after the choices, in the French Excel format or the international one.
+- Given a choice that is empty, inconsistent or too large, when I look at the Export tab, then
+  a message says why and the export button is disabled.
 - Given the Site tab, when no site is selected, then the list of the 10 sites is offered and
   the page asks me to select one.
 - Given I select a site, when its data has loaded, then four tiles summarize the site (mean
@@ -91,8 +102,33 @@
   chart the ten highest, and list the units of a selected type site by site.
 - FR-018: System MUST keep the selected unit type in the host-synced state, and use the same
   time frame for the unit type statistics and for the trend.
+- FR-019: System MUST offer an Export tab where the user chooses the scope (one site or all,
+  one unit type or all), the figures among OEE, quality, performance, availability and
+  off-spec items, the period as a first and a last day in UTC (last day included; by default
+  the 7 days that end on the day of the latest value) and the step among 1 minute, 5 minutes,
+  15 minutes, 1 hour, 4 hours and 1 day.
+- FR-020: System MUST export the averages per step as a CSV file built in the browser: one row
+  per unit and per step with the columns site, unit_type, unit, time_utc and one column per
+  chosen figure; separator ; with decimal comma (French Excel, default) or , with decimal
+  point; UTF-8 with a byte order mark.
+- FR-021: System MUST show the size of the export before it starts (units, steps, rows,
+  requests), refuse an export above 200 000 rows or 250 requests, and show the progress, the
+  result or the failure of a running export.
 - FR-015: System MUST open the Site tab on a site selected from the map or from the table,
   and keep the selected tab and time frame in the host-synced state.
+- FR-022: System MUST read the units of all sites in one pass (the assets of the asset space,
+  then the latest OEE of each) for the Overview, Unit types and Export tabs, and MUST show the
+  unit type ranking as soon as the OEE statistics are read; the mean quality, performance and
+  availability fill their columns afterwards, with a loading mark in the meantime.
+- FR-023: System MUST show a message with a Try again action, instead of a blank page, when
+  the page fails to display.
+- FR-024: System MUST stay usable on a phone-size screen (375 px wide): no horizontal scroll
+  of the page, tables scrolling inside their own frame, tabs, time-frame shortcuts and map
+  markers at least 44 px high on touch screens, and a unit type chart that shortens the names
+  to leave room for the bars.
+- FR-025: System MUST meet WCAG 2.2 level AA on the points an automated check can verify:
+  text contrast of at least 4.5:1, zoom allowed, every control reachable and usable with the
+  keyboard, and the OEE level (below 70%, below 85%) given in text and not by colour alone.
 
 ## Success Criteria
 
@@ -107,16 +143,27 @@
 
 ## Assumptions
 
-- Read-only app, English UI, desktop first.
+- Read-only app, English UI, desktop first; usable on a phone (FR-024).
 - The 0.85 warning threshold is a choice of this app, not a bootcamp value.
 - The trend of quality, performance and availability is out of scope.
 - The asset data carries no coordinates: the city of each site is listed in the app
   (`siteLocations.ts`). The map is an outline drawn in the app; no map service is called.
 - A custom date range for the trend is out of scope; the shortcuts are the only time frames.
-- The overview reads the units of all sites (about 40 requests) each time it is opened.
+- The units of all sites are read in about 13 requests (1021 assets, 100 latest values per
+  request), shared by the Overview, Unit types and Export tabs and cached for 5 minutes. In
+  that read only the latest OEE is known: quality, performance and availability of a unit are
+  read when its site is opened.
+- On the map, the markers of neighbouring European sites overlap; the table under the map
+  gives the same action for every site.
+- The export choices are kept while the app is open but are not saved in the address.
+- The export reads at most 100 time series and 10 000 averages per request; a period longer
+  than 10 000 steps is cut in windows.
 - A unit type is a unit name: the 628 units carry 30 names, each present in the 10 sites.
 - The unit type statistics read about 30 more requests (OEE averages of 628 units, 100 time
-  series and 10 000 aggregates per request at most); 43 for the 1Y time frame.
+  series and 10 000 aggregates per request at most); 43 for the 1Y time frame. About 12 of
+  them (the OEE) come before the ranking is shown.
+- The secondary text grey of the light theme is one step darker than the Aura default
+  (mountain-600 instead of mountain-500) to reach the 4.5:1 contrast.
 
 ---
 

@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -9,8 +9,10 @@ import { OeePage } from './OeePage';
 
 const SITE_TAB = JSON.stringify({ view: 'site' });
 const UNIT_TYPES = JSON.stringify({ view: 'units' });
+const EXPORT = JSON.stringify({ view: 'export' });
 const OSLO = JSON.stringify({ view: 'site', siteId: 'oslo' });
 const OSLO_BALANCE_TANK = JSON.stringify({ view: 'site', siteId: 'oslo', unitId: 'OSPRPATA241' });
+const CHART_TIMEOUT_MS = 10000;
 
 describe(OeePage.name, () => {
   let service: FakeOeeService;
@@ -36,6 +38,7 @@ describe(OeePage.name, () => {
     expect(screen.getByRole('tab', { name: 'Overview' })).toHaveAttribute('aria-selected', 'true');
     expect(screen.getByRole('tab', { name: 'Unit types' })).toHaveAttribute('aria-selected', 'false');
     expect(screen.getByRole('tab', { name: 'Site' })).toHaveAttribute('aria-selected', 'false');
+    expect(screen.getByRole('tab', { name: 'Export' })).toHaveAttribute('aria-selected', 'false');
   });
 
   describe('overview tab', () => {
@@ -87,13 +90,21 @@ describe(OeePage.name, () => {
       expect(rows[0]).toContain('82.8%');
     });
 
-    it('says how many sites are still loading their units', async () => {
-      service.listUnits.mockReturnValue(new Promise(() => undefined));
+    it('says that the units of the sites are still loading', async () => {
+      service.listAllUnits.mockReturnValue(new Promise(() => undefined));
 
       render(<OeePage />, { wrapper: makeOeeWrapper({ service }) });
 
-      await waitFor(() => expect(screen.getByText('Loading the units of 2 of 2 sites…')).toBeInTheDocument());
+      await waitFor(() => expect(screen.getByText('Loading the units of the 2 sites…')).toBeInTheDocument());
       expect(screen.getByRole('button', { name: 'Oslo: loading' })).toBeInTheDocument();
+    });
+
+    it('shows the units error once, above the map', async () => {
+      service.listAllUnits.mockRejectedValue(new Error('429'));
+
+      render(<OeePage />, { wrapper: makeOeeWrapper({ service }) });
+
+      expect(await screen.findByText('The units could not be loaded. 429')).toBeInTheDocument();
     });
 
     it('opens the site tab when a site is selected on the map', async () => {
@@ -123,7 +134,7 @@ describe(OeePage.name, () => {
 
   describe('unit types tab', () => {
     it('shows a loading indicator while the statistics load', async () => {
-      service.getUnitPeriodStats.mockReturnValue(new Promise(() => undefined));
+      service.getUnitOeeStats.mockReturnValue(new Promise(() => undefined));
 
       render(<OeePage />, { wrapper: makeOeeWrapper({ service, initialState: UNIT_TYPES }) });
 
@@ -132,7 +143,7 @@ describe(OeePage.name, () => {
     });
 
     it('shows the statistics error', async () => {
-      service.getUnitPeriodStats.mockRejectedValue(new Error('500'));
+      service.getUnitOeeStats.mockRejectedValue(new Error('500'));
 
       render(<OeePage />, { wrapper: makeOeeWrapper({ service, initialState: UNIT_TYPES }) });
 
@@ -142,7 +153,7 @@ describe(OeePage.name, () => {
     });
 
     it('says when no unit has statistics', async () => {
-      service.listUnits.mockResolvedValue([]);
+      service.listAllUnits.mockResolvedValue([]);
 
       render(<OeePage />, { wrapper: makeOeeWrapper({ service, initialState: UNIT_TYPES }) });
 
@@ -161,9 +172,24 @@ describe(OeePage.name, () => {
             'Highest: Chocolate Spray (50.0%), Balance Tank (25.0%).'
         )
       ).toBeInTheDocument();
+      // The chart is loaded on demand: its first import can take a few seconds in the test runner.
       expect(
-        screen.getByRole('img', { name: 'Share of the time below 70% OEE for the 2 most problematic unit types' })
+        await screen.findByRole(
+          'img',
+          { name: 'Share of the time below 70% OEE for the 2 most problematic unit types' },
+          { timeout: CHART_TIMEOUT_MS }
+        )
       ).toBeInTheDocument();
+    });
+
+    it('shows the ranking while the mean quality, performance and availability still load', async () => {
+      service.getUnitComponentMeans.mockReturnValue(new Promise(() => undefined));
+
+      render(<OeePage />, { wrapper: makeOeeWrapper({ service, initialState: UNIT_TYPES }) });
+
+      const table = await screen.findByRole('table', { name: 'Statistics by unit type' });
+      expect(await within(table).findByText('Chocolate Spray')).toBeInTheDocument();
+      expect(within(table).getAllByLabelText('Loading').length).toBeGreaterThan(0);
     });
 
     it('lists every unit type with its statistics, the most problematic first', async () => {
@@ -193,7 +219,7 @@ describe(OeePage.name, () => {
       await userEvent.click(within(timeFrames).getByRole('tab', { name: '1M' }));
 
       await waitFor(() =>
-        expect(service.getUnitPeriodStats).toHaveBeenCalledWith(expect.any(Array), UPDATED_AT, '1m')
+        expect(service.getUnitOeeStats).toHaveBeenCalledWith(expect.any(Array), UPDATED_AT, '1m')
       );
       expect(await screen.findByText(/over the last\s+30 days/)).toBeInTheDocument();
     });
@@ -202,8 +228,11 @@ describe(OeePage.name, () => {
       const syncState = vi.fn<(serialized: string) => void>();
       render(<OeePage />, { wrapper: makeOeeWrapper({ service, syncState, initialState: UNIT_TYPES }) });
       const table = await screen.findByRole('table', { name: 'Statistics by unit type' });
+      await within(table).findByText('Balance Tank');
+      // The rows are drawn again when the mean quality, performance and availability arrive.
+      await waitFor(() => expect(within(table).queryByLabelText('Loading')).not.toBeInTheDocument());
 
-      await userEvent.click(await within(table).findByText('Balance Tank'));
+      await userEvent.click(within(table).getByText('Balance Tank'));
 
       expect(await screen.findByRole('heading', { level: 2, name: 'Balance Tank by site' })).toBeInTheDocument();
       expect(
@@ -232,6 +261,102 @@ describe(OeePage.name, () => {
         expect(screen.getByRole('heading', { level: 2, name: 'OEE trend of Balance Tank' })).toBeInTheDocument()
       );
       expect(screen.getByRole('tab', { name: 'Site' })).toHaveAttribute('aria-selected', 'true');
+    });
+  });
+
+  describe('export tab', () => {
+    it('shows a loading indicator while the units of every site load', () => {
+      service.listAllUnits.mockReturnValue(new Promise(() => undefined));
+
+      render(<OeePage />, { wrapper: makeOeeWrapper({ service, initialState: EXPORT }) });
+
+      expect(screen.getByRole('heading', { level: 2, name: 'Export to CSV' })).toBeInTheDocument();
+      expect(screen.getByText('Loading the units of every site…')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Export CSV' })).toBeDisabled();
+    });
+
+    it('shows the units error', async () => {
+      service.listAllUnits.mockRejectedValue(new Error('429'));
+
+      render(<OeePage />, { wrapper: makeOeeWrapper({ service, initialState: EXPORT }) });
+
+      await waitFor(() => expect(screen.getByText('The units could not be loaded. 429')).toBeInTheDocument());
+    });
+
+    it('proposes the last 7 days of data, the four ratios and sizes the export', async () => {
+      render(<OeePage />, { wrapper: makeOeeWrapper({ service, initialState: EXPORT }) });
+
+      expect(
+        await screen.findByText('4 units, 168 steps each: up to 672 rows, read in 1 request.')
+      ).toBeInTheDocument();
+      expect(screen.getByLabelText('First day (UTC)')).toHaveValue('2026-09-28');
+      expect(screen.getByLabelText('Last day (UTC), included')).toHaveValue('2026-10-04');
+      expect(screen.getByRole('checkbox', { name: 'OEE' })).toBeChecked();
+      expect(screen.getByRole('checkbox', { name: 'Availability' })).toBeChecked();
+      expect(screen.getByRole('checkbox', { name: 'Off-spec items' })).not.toBeChecked();
+      expect(screen.getByRole('button', { name: 'Export CSV' })).toBeEnabled();
+    });
+
+    it('sizes the export again when the period changes', async () => {
+      render(<OeePage />, { wrapper: makeOeeWrapper({ service, initialState: EXPORT }) });
+      await screen.findByText('4 units, 168 steps each: up to 672 rows, read in 1 request.');
+
+      fireEvent.change(screen.getByLabelText('First day (UTC)'), { target: { value: '2026-10-04' } });
+
+      expect(
+        await screen.findByText('4 units, 24 steps each: up to 96 rows, read in 1 request.')
+      ).toBeInTheDocument();
+    });
+
+    it('explains why the export cannot start and disables the button', async () => {
+      render(<OeePage />, { wrapper: makeOeeWrapper({ service, initialState: EXPORT }) });
+      await screen.findByText('4 units, 168 steps each: up to 672 rows, read in 1 request.');
+
+      for (const name of ['OEE', 'Quality', 'Performance', 'Availability']) {
+        await userEvent.click(screen.getByRole('checkbox', { name }));
+      }
+
+      expect(await screen.findByText('Select at least one kind of data.')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Export CSV' })).toBeDisabled();
+    });
+
+    it('downloads the CSV file and says what was exported', async () => {
+      const downloadFile = vi.fn<(fileName: string, content: string) => void>();
+      render(<OeePage />, { wrapper: makeOeeWrapper({ service, downloadFile, initialState: EXPORT }) });
+      await screen.findByText('4 units, 168 steps each: up to 672 rows, read in 1 request.');
+
+      await userEvent.click(screen.getByRole('button', { name: 'Export CSV' }));
+
+      expect(
+        await screen.findByText(
+          '4 rows exported to icf-oee_all-sites_all-unit-types_2026-09-28_2026-10-04_1h.csv.'
+        )
+      ).toBeInTheDocument();
+      expect(downloadFile).toHaveBeenCalledWith(
+        'icf-oee_all-sites_all-unit-types_2026-09-28_2026-10-04_1h.csv',
+        expect.stringContaining('site;unit_type;unit;time_utc;oee;quality;performance;availability')
+      );
+    });
+
+    it('shows a failed export', async () => {
+      service.exportAverages.mockRejectedValue(new Error('500'));
+      render(<OeePage />, { wrapper: makeOeeWrapper({ service, initialState: EXPORT }) });
+      await screen.findByText('4 units, 168 steps each: up to 672 rows, read in 1 request.');
+
+      await userEvent.click(screen.getByRole('button', { name: 'Export CSV' }));
+
+      expect(await screen.findByRole('alert')).toHaveTextContent('The export failed. 500');
+    });
+
+    it('keeps the choices when leaving the tab and coming back', async () => {
+      render(<OeePage />, { wrapper: makeOeeWrapper({ service, initialState: EXPORT }) });
+      await screen.findByText('4 units, 168 steps each: up to 672 rows, read in 1 request.');
+      fireEvent.change(screen.getByLabelText('First day (UTC)'), { target: { value: '2026-10-04' } });
+
+      await userEvent.click(screen.getByRole('tab', { name: 'Site' }));
+      await userEvent.click(screen.getByRole('tab', { name: 'Export' }));
+
+      expect(await screen.findByLabelText('First day (UTC)')).toHaveValue('2026-10-04');
     });
   });
 
@@ -349,7 +474,11 @@ describe(OeePage.name, () => {
       );
       expect(screen.getByText('OSPRPATA241 · hourly average, 7 days')).toBeInTheDocument();
       expect(
-        screen.getByRole('img', { name: 'Hourly average OEE of Balance Tank, with the 70% alert threshold' })
+        await screen.findByRole(
+          'img',
+          { name: 'Hourly average OEE of Balance Tank, with the 70% alert threshold' },
+          { timeout: CHART_TIMEOUT_MS }
+        )
       ).toBeInTheDocument();
       expect(screen.getByText('(selected)')).toBeInTheDocument();
     });

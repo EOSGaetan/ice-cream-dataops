@@ -11,7 +11,9 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html', 'lcov'],
-      exclude: ['node_modules/', 'dist/', '.claude/', '.agents/', 'vitest.setup.ts', '**/*.config.ts', '**/*.d.ts', 'src/devPreview.tsx'],
+      // Every source file counts, including the ones no test imports.
+      include: ['src/**/*.{ts,tsx}'],
+      exclude: ['src/**/*.test.{ts,tsx}', 'src/main.tsx', 'src/vite-env.d.ts'],
     },
   },
 });

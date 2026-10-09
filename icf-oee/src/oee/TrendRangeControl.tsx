@@ -23,9 +23,15 @@ export function TrendRangeControl({ range, onSelect, label = 'Time frame of the 
         if (isTrendRangeId(value)) onSelect(value);
       }}
     >
-      <SegmentedControlList size="small" aria-label={label}>
+      <SegmentedControlList size="small" aria-label={label} className="pointer-coarse:h-auto">
         {TREND_RANGES.map((option) => (
-          <SegmentedControlButton key={option.id} value={option.id} title={`Last ${option.period}`}>
+          <SegmentedControlButton
+            key={option.id}
+            value={option.id}
+            title={`Last ${option.period}`}
+            // A finger needs a larger target than a mouse pointer.
+            className="pointer-coarse:h-11 pointer-coarse:min-w-11"
+          >
             {option.label}
           </SegmentedControlButton>
         ))}

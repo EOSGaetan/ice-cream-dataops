@@ -41,3 +41,8 @@ export function summarizeTrend(points: TrendPoint[]): TrendSummary | null {
     count: values.length,
   };
 }
+
+/** "Main Drive, Indexing Chain Conveyor" cut to 16 characters becomes "Main Drive, Ind…". */
+export function shortenName(name: string, maxLength: number): string {
+  return name.length <= maxLength ? name : `${name.slice(0, maxLength - 1).trimEnd()}…`;
+}

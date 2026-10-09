@@ -56,8 +56,8 @@ describe(useOeeViewModel.name, () => {
       await waitFor(() => expect(result.current.overview.items.every((site) => site.summary !== null)).toBe(true));
       await waitFor(() => expect(result.current.overview.items).toHaveLength(2));
 
-      expect(service.listUnits).toHaveBeenCalledWith('houston');
-      expect(service.listUnits).toHaveBeenCalledWith('oslo');
+      expect(service.listAllUnits).toHaveBeenCalledTimes(1);
+      expect(service.listUnits).not.toHaveBeenCalled();
       const oslo = result.current.overview.items[1];
       expect(oslo.site).toEqual(SITES[1]);
       expect(oslo.summary?.unitCount).toBe(2);
@@ -66,8 +66,8 @@ describe(useOeeViewModel.name, () => {
       expect(oslo.error).toBeNull();
     });
 
-    it('marks a site as loading until its units arrive', async () => {
-      service.listUnits.mockReturnValue(new Promise(() => undefined));
+    it('marks the sites as loading until the units arrive', async () => {
+      service.listAllUnits.mockReturnValue(new Promise(() => undefined));
 
       const { result } = renderHook(() => useOeeViewModel(), { wrapper: makeOeeWrapper({ service, syncState }) });
 
@@ -81,17 +81,16 @@ describe(useOeeViewModel.name, () => {
       });
     });
 
-    it('reports the error of a site without hiding the others', async () => {
-      service.listUnits.mockImplementation((siteId) =>
-        siteId === 'houston' ? Promise.reject(new Error('429')) : Promise.resolve(UNITS)
-      );
+    it('reports an error of the units on every site', async () => {
+      service.listAllUnits.mockRejectedValue(new Error('429'));
 
       const { result } = renderHook(() => useOeeViewModel(), { wrapper: makeOeeWrapper({ service, syncState }) });
 
       await waitFor(() =>
         expect(result.current.overview.items[0]?.error).toBe('The units could not be loaded. 429')
       );
-      await waitFor(() => expect(result.current.overview.items[1]?.summary).not.toBeNull());
+      expect(result.current.overview.items[1]?.error).toBe('The units could not be loaded. 429');
+      expect(result.current.overview.items[1]?.summary).toBeNull();
     });
 
     it('opens a site in the site tab and syncs the state to the host', async () => {
@@ -125,16 +124,17 @@ describe(useOeeViewModel.name, () => {
   });
 
   describe('unit types', () => {
-    it('is loading until the units of every site and their statistics arrive', async () => {
-      service.getUnitPeriodStats.mockReturnValue(new Promise(() => undefined));
+    it('is loading until the units of every site and their OEE statistics arrive', async () => {
+      service.getUnitOeeStats.mockReturnValue(new Promise(() => undefined));
 
       const { result } = renderHook(() => useOeeViewModel(), {
         wrapper: makeOeeWrapper({ service, syncState, initialState: UNIT_TYPES }),
       });
 
       expect(result.current.unitTypes).toEqual({ items: [], isLoading: true, error: null });
-      await waitFor(() => expect(service.getUnitPeriodStats).toHaveBeenCalled());
+      await waitFor(() => expect(service.getUnitOeeStats).toHaveBeenCalled());
       expect(result.current.unitTypes.isLoading).toBe(true);
+      expect(service.getUnitComponentMeans).not.toHaveBeenCalled();
     });
 
     it('asks for the statistics of every unit over the time frame that ends at the latest value', async () => {
@@ -143,13 +143,11 @@ describe(useOeeViewModel.name, () => {
       });
 
       await waitFor(() => expect(result.current.unitTypes.items).toHaveLength(2));
-      expect(service.listUnits).toHaveBeenCalledWith('houston');
-      expect(service.listUnits).toHaveBeenCalledWith('oslo');
-      expect(service.getUnitPeriodStats).toHaveBeenCalledWith(
-        ['OSPRPATA241', 'OSPRFICHSP463', 'OSPRPATA241', 'OSPRFICHSP463'],
-        UPDATED_AT,
-        '1w'
-      );
+      const unitIds = ['OSPRPATA241', 'OSPRFICHSP463', 'OSPRPATA241', 'OSPRFICHSP463'];
+      expect(service.listAllUnits).toHaveBeenCalledTimes(1);
+      expect(service.listUnits).not.toHaveBeenCalled();
+      expect(service.getUnitOeeStats).toHaveBeenCalledWith(unitIds, UPDATED_AT, '1w');
+      await waitFor(() => expect(service.getUnitComponentMeans).toHaveBeenCalledWith(unitIds, UPDATED_AT, '1w'));
     });
 
     it('ranks the unit types of all sites: most time below the alert threshold first', async () => {
@@ -158,6 +156,7 @@ describe(useOeeViewModel.name, () => {
       });
 
       await waitFor(() => expect(result.current.unitTypes.items).toHaveLength(2));
+      await waitFor(() => expect(result.current.isLoadingUnitTypeDetails).toBe(false));
       const [first, second] = result.current.unitTypes.items;
       expect(first.name).toBe('Chocolate Spray');
       expect(first.belowAlertShare).toBeCloseTo(0.5);
@@ -170,8 +169,31 @@ describe(useOeeViewModel.name, () => {
       expect(result.current.selectedUnitType).toBeNull();
     });
 
+    it('shows the ranking first, then the mean quality, performance and availability', async () => {
+      let sendComponents: () => void = () => undefined;
+      service.getUnitComponentMeans.mockReturnValue(
+        new Promise((resolve) => {
+          sendComponents = () =>
+            resolve([{ externalId: 'OSPRPATA241', quality: 0.9, performance: 0.95, availability: 0.9 }]);
+        })
+      );
+      const { result } = renderHook(() => useOeeViewModel(), {
+        wrapper: makeOeeWrapper({ service, syncState, initialState: UNIT_TYPES }),
+      });
+
+      await waitFor(() => expect(result.current.unitTypes.items).toHaveLength(2));
+      expect(result.current.unitTypes.isLoading).toBe(false);
+      expect(result.current.isLoadingUnitTypeDetails).toBe(true);
+      expect(result.current.unitTypes.items[1]).toMatchObject({ name: 'Balance Tank', quality: null });
+
+      act(() => sendComponents());
+
+      await waitFor(() => expect(result.current.isLoadingUnitTypeDetails).toBe(false));
+      expect(result.current.unitTypes.items[1].quality).toBeCloseTo(0.9);
+    });
+
     it('reports an error of the statistics', async () => {
-      service.getUnitPeriodStats.mockRejectedValue(new Error('500'));
+      service.getUnitOeeStats.mockRejectedValue(new Error('500'));
 
       const { result } = renderHook(() => useOeeViewModel(), {
         wrapper: makeOeeWrapper({ service, syncState, initialState: UNIT_TYPES }),
@@ -186,8 +208,8 @@ describe(useOeeViewModel.name, () => {
       );
     });
 
-    it('reports an error of the units of a site', async () => {
-      service.listUnits.mockRejectedValue(new Error('429'));
+    it('reports an error of the units', async () => {
+      service.listAllUnits.mockRejectedValue(new Error('429'));
 
       const { result } = renderHook(() => useOeeViewModel(), {
         wrapper: makeOeeWrapper({ service, syncState, initialState: UNIT_TYPES }),
@@ -195,7 +217,7 @@ describe(useOeeViewModel.name, () => {
 
       await waitFor(() => expect(result.current.unitTypes.error).toBe('The unit statistics could not be loaded. 429'));
       expect(result.current.unitTypes.isLoading).toBe(false);
-      expect(service.getUnitPeriodStats).not.toHaveBeenCalled();
+      expect(service.getUnitOeeStats).not.toHaveBeenCalled();
     });
 
     it('selects a unit type and syncs the state to the host', async () => {
@@ -221,7 +243,7 @@ describe(useOeeViewModel.name, () => {
       act(() => result.current.selectTrendRange('1m'));
 
       await waitFor(() =>
-        expect(service.getUnitPeriodStats).toHaveBeenCalledWith(expect.any(Array), UPDATED_AT, '1m')
+        expect(service.getUnitOeeStats).toHaveBeenCalledWith(expect.any(Array), UPDATED_AT, '1m')
       );
     });
 

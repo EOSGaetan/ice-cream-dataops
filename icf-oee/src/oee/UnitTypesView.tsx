@@ -1,4 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@cognite/aura/components/card';
+import { lazy, Suspense } from 'react';
 
 import { formatPercent } from './oeeFormat';
 import { Empty, ErrorMessage, Loading } from './OeeStates';
@@ -6,21 +7,30 @@ import { TrendRangeControl } from './TrendRangeControl';
 import { getTrendRange } from './types';
 import { UnitTypeDetail } from './UnitTypeDetail';
 import type { UnitTypeStats } from './unitTypes';
-import { UnitTypesChart } from './UnitTypesChart';
 import { UnitTypesTable } from './UnitTypesTable';
 import type { OeeViewModel } from './useOeeViewModel';
+
+// The chart library is the heaviest part of the app: it is loaded when a chart is first shown.
+const UnitTypesChart = lazy(() => import('./UnitTypesChart').then((module) => ({ default: module.UnitTypesChart })));
 
 /** How many unit types the ranking chart shows. */
 const CHART_TYPE_COUNT = 10;
 
 type UnitTypesViewProps = Pick<
   OeeViewModel,
-  'unitTypes' | 'selectedUnitType' | 'selectUnitType' | 'openUnit' | 'trendRange' | 'selectTrendRange'
+  | 'unitTypes'
+  | 'isLoadingUnitTypeDetails'
+  | 'selectedUnitType'
+  | 'selectUnitType'
+  | 'openUnit'
+  | 'trendRange'
+  | 'selectTrendRange'
 >;
 
 /** The unit types tab: which kind of unit causes the most problems worldwide. */
 export function UnitTypesView({
   unitTypes,
+  isLoadingUnitTypeDetails,
   selectedUnitType,
   selectUnitType,
   openUnit,
@@ -46,6 +56,7 @@ export function UnitTypesView({
         isLoading={unitTypes.isLoading}
         error={unitTypes.error}
         unitTypes={unitTypes.items}
+        isLoadingDetails={isLoadingUnitTypeDetails}
         bucket={range.bucket}
         selectedUnitType={selectedUnitType}
         onSelect={selectUnitType}
@@ -59,6 +70,7 @@ type UnitTypesRegionProps = {
   isLoading: boolean;
   error: string | null;
   unitTypes: UnitTypeStats[];
+  isLoadingDetails: boolean;
   bucket: string;
   selectedUnitType: UnitTypeStats | null;
   onSelect: (name: string) => void;
@@ -69,6 +81,7 @@ function UnitTypesRegion({
   isLoading,
   error,
   unitTypes,
+  isLoadingDetails,
   bucket,
   selectedUnitType,
   onSelect,
@@ -90,7 +103,9 @@ function UnitTypesRegion({
           <CardDescription>{describeRanking(charted, bucket)}</CardDescription>
         </CardHeader>
         <CardContent>
-          <UnitTypesChart unitTypes={charted} />
+          <Suspense fallback={<Loading label="Loading chart…" />}>
+            <UnitTypesChart unitTypes={charted} />
+          </Suspense>
         </CardContent>
       </Card>
 
@@ -104,7 +119,12 @@ function UnitTypesRegion({
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <UnitTypesTable unitTypes={unitTypes} selectedName={selectedUnitType?.name ?? null} onSelect={onSelect} />
+              <UnitTypesTable
+                unitTypes={unitTypes}
+                selectedName={selectedUnitType?.name ?? null}
+                isLoadingDetails={isLoadingDetails}
+                onSelect={onSelect}
+              />
             </CardContent>
           </Card>
         </div>

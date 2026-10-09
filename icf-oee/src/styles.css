@@ -2,6 +2,15 @@
 
 @source '../node_modules/@cognite/aura/dist/components';
 
+/*
+ * Accessibility: the default secondary text grey of the light theme (mountain-500) has a contrast
+ * of 3.7:1 on white, below the 4.5:1 that WCAG AA asks for text. The next grey of the same palette
+ * that passes on the white, card and muted backgrounds is mountain-600 (5.8:1 on white).
+ */
+:root:not(.dark) {
+  --muted-foreground: var(--mountain-600);
+}
+
 :root {
   --font-inter: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-source-code-pro: "Source Code Pro", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,

@@ -14,11 +14,13 @@ const PINNED_COLUMNS = ['name'];
 type UnitTypesTableProps = {
   unitTypes: UnitTypeStats[];
   selectedName: string | null;
+  /** Mean quality, performance and availability are still loading. */
+  isLoadingDetails: boolean;
   onSelect: (name: string) => void;
 };
 
-export function UnitTypesTable({ unitTypes, selectedName, onSelect }: UnitTypesTableProps) {
-  const columns = useMemo(() => buildColumns(selectedName), [selectedName]);
+export function UnitTypesTable({ unitTypes, selectedName, isLoadingDetails, onSelect }: UnitTypesTableProps) {
+  const columns = useMemo(() => buildColumns(selectedName, isLoadingDetails), [selectedName, isLoadingDetails]);
 
   return (
     // DataGrid is virtualized: it fills its parent, which needs a size.
@@ -37,7 +39,7 @@ export function UnitTypesTable({ unitTypes, selectedName, onSelect }: UnitTypesT
   );
 }
 
-function buildColumns(selectedName: string | null): ColumnDef<UnitTypeStats>[] {
+function buildColumns(selectedName: string | null, isLoadingDetails: boolean): ColumnDef<UnitTypeStats>[] {
   return [
     {
       id: 'name',
@@ -63,9 +65,9 @@ function buildColumns(selectedName: string | null): ColumnDef<UnitTypeStats>[] {
       size: 100,
       cell: ({ row }) => <OeeValue ratio={row.original.meanOee} />,
     },
-    percentColumn('quality', 'Quality', 90),
-    percentColumn('performance', 'Performance', 112),
-    percentColumn('availability', 'Availability', 104),
+    percentColumn('quality', 'Quality', 90, isLoadingDetails),
+    percentColumn('performance', 'Performance', 112, isLoadingDetails),
+    percentColumn('availability', 'Availability', 104, isLoadingDetails),
     {
       id: 'lowestSite',
       header: 'Lowest site',
@@ -92,7 +94,8 @@ function buildColumns(selectedName: string | null): ColumnDef<UnitTypeStats>[] {
 function percentColumn(
   metric: 'quality' | 'performance' | 'availability',
   header: string,
-  size: number
+  size: number,
+  isLoading: boolean
 ): ColumnDef<UnitTypeStats> {
   return {
     id: metric,
@@ -100,6 +103,6 @@ function percentColumn(
     accessorFn: (type) => type[metric] ?? undefined,
     sortUndefined: 'last',
     size,
-    cell: ({ row }) => formatPercent(row.original[metric]),
+    cell: ({ row }) => (isLoading ? <span aria-label="Loading">…</span> : formatPercent(row.original[metric])),
   };
 }

@@ -10,6 +10,8 @@ import { Loader } from '@cognite/aura/components/loader';
 import type { ComponentProps } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 
+import { AppErrorBoundary } from './oee/AppErrorBoundary';
+import { downloadCsvFile } from './oee/downloadFile';
 import { OeeDepsContext } from './oee/oeeDeps';
 import { OeePage } from './oee/OeePage';
 import { createOeeService } from './oee/oeeService';
@@ -51,24 +53,28 @@ const errorFallback = (
 
 type OeeAppProps = AppConnectResult & {
   createService: (client: OeeCdfClient) => OeeService;
+  downloadFile: (fileName: string, content: string) => void;
 };
 
 /** Wires the OEE page to the authenticated Cognite client and to the Fusion host. */
-function OeeApp({ api, initialState, createService }: OeeAppProps) {
+function OeeApp({ api, initialState, createService, downloadFile }: OeeAppProps) {
   const client = useCogniteSdk();
   const deps = useMemo(
     () => ({
       service: createService(client),
       // Writes to the ?customAppInternalState search param so the URL is bookmarkable/shareable.
       syncState: (serialized: string) => void api.syncInternalState(serialized),
+      downloadFile,
     }),
-    [api, client, createService]
+    [api, client, createService, downloadFile]
   );
 
   return (
     <OeeDepsContext.Provider value={deps}>
       <OeeStateProvider initialState={initialState}>
-        <OeePage />
+        <AppErrorBoundary>
+          <OeePage />
+        </AppErrorBoundary>
       </OeeStateProvider>
     </OeeDepsContext.Provider>
   );
@@ -78,12 +84,14 @@ type AppProps = {
   deps?: ComponentProps<typeof CogniteSdkProvider>['deps'];
   connectToHostApp?: () => Promise<AppConnectResult>;
   createService?: (client: OeeCdfClient) => OeeService;
+  downloadFile?: (fileName: string, content: string) => void;
 };
 
 function App({
   deps,
   connectToHostApp = deps?.connectToHostApp ?? connectToHostAppImpl,
   createService = createOeeService,
+  downloadFile = downloadCsvFile,
 }: AppProps) {
   const [connection, setConnection] = useState<Connection>({ status: 'connecting' });
 
@@ -107,7 +115,12 @@ function App({
   return (
     <CogniteSdkProvider loadingFallback={loadingFallback} errorFallback={errorFallback} deps={deps}>
       {connection.status === 'connected' ? (
-        <OeeApp api={connection.api} initialState={connection.initialState} createService={createService} />
+        <OeeApp
+          api={connection.api}
+          initialState={connection.initialState}
+          createService={createService}
+          downloadFile={downloadFile}
+        />
       ) : (
         loadingFallback
       )}

@@ -1,13 +1,19 @@
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@cognite/aura/chart';
 import type { ChartConfig } from '@cognite/aura/chart';
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
+import { Bar, BarChart, CartesianGrid, useChartWidth, XAxis, YAxis } from 'recharts';
 
-import { formatPercent } from './oeeFormat';
+import { formatPercent, shortenName } from './oeeFormat';
 import type { UnitTypeStats } from './unitTypes';
 
 const CHART_CONFIG: ChartConfig = {
   share: { label: 'Time below 70%', color: 'var(--chart-fjord-color-1)' },
 };
+
+/** Below this chart width (a phone), the names get less room and are shortened, to leave room for the bars. */
+const NARROW_CHART_PX = 480;
+const NAME_WIDTH_PX = 220;
+const NARROW_NAME_WIDTH_PX = 116;
+const NARROW_NAME_LENGTH = 16;
 
 type UnitTypesChartProps = {
   /** The unit types to chart, already in ranking order. */
@@ -30,7 +36,7 @@ export function UnitTypesChart({ unitTypes }: UnitTypesChartProps) {
         <BarChart data={rows} layout="vertical" margin={{ top: 0, right: 24, bottom: 0, left: 8 }}>
           <CartesianGrid horizontal={false} />
           <XAxis type="number" domain={[0, axisMax]} tickFormatter={formatAxisPercent} tickLine={false} axisLine={false} />
-          <YAxis type="category" dataKey="name" width={220} tickLine={false} axisLine={false} interval={0} />
+          <UnitTypeAxis />
           <ChartTooltip
             content={
               <ChartTooltipContent valueFormatter={(value) => (typeof value === 'number' ? formatPercent(value) : value)} />
@@ -41,6 +47,28 @@ export function UnitTypesChart({ unitTypes }: UnitTypesChartProps) {
       </ChartContainer>
     </div>
   );
+}
+
+/** The axis of the unit type names; its width follows the width of the chart. */
+function UnitTypeAxis() {
+  const chartWidth = useChartWidth();
+  const isNarrow = chartWidth !== undefined && chartWidth < NARROW_CHART_PX;
+  return (
+    <YAxis
+      type="category"
+      dataKey="name"
+      width={isNarrow ? NARROW_NAME_WIDTH_PX : NAME_WIDTH_PX}
+      tickFormatter={isNarrow ? shortenAxisName : undefined}
+      tickLine={false}
+      axisLine={false}
+      interval={0}
+    />
+  );
+}
+
+/** The table below the chart has the full names. */
+function shortenAxisName(name: string): string {
+  return shortenName(name, NARROW_NAME_LENGTH);
 }
 
 function formatAxisPercent(ratio: number): string {

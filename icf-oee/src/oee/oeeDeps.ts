@@ -7,6 +7,8 @@ export type OeeDeps = {
   service: OeeService;
   /** Pushes the serialized state to the Fusion host (`api.syncInternalState`). */
   syncState: (serialized: string) => void;
+  /** Hands a text file to the browser as a download. */
+  downloadFile: (fileName: string, content: string) => void;
 };
 
 export const OeeDepsContext = createContext<OeeDeps | null>(null);

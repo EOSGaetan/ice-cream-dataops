@@ -1,4 +1,4 @@
-import { useQueries, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
 import { useOeeDeps } from './oeeDeps';
@@ -6,9 +6,19 @@ import { lowestUnits, summarizeSite } from './oeeKpi';
 import type { SiteSummary } from './oeeKpi';
 import { useOeeState } from './oeeState';
 import type { OeeState } from './oeeState';
-import type { OeeView, Site, TrendPoint, TrendRangeId, UnitOee, UnitPeriodStats } from './types';
+import type {
+  OeeView,
+  Site,
+  SiteUnit,
+  TrendPoint,
+  TrendRangeId,
+  UnitComponentMeans,
+  UnitOee,
+  UnitOeeStats,
+} from './types';
 import { groupUnitTypes } from './unitTypes';
 import type { UnitTypeStats } from './unitTypes';
+import { latestTimestamp, useAllUnitsQuery, useSitesQuery } from './useSiteUnits';
 
 /** How many of the lowest units the overview shows per site. */
 const LOWEST_UNIT_COUNT = 3;
@@ -39,6 +49,8 @@ export type OeeViewModel = {
   openSite: (siteId: string) => void;
   /** The unit types worldwide over the time frame, most time below the alert threshold first. */
   unitTypes: DataRegion<UnitTypeStats>;
+  /** The ranking is shown; mean quality, performance and availability are still loading. */
+  isLoadingUnitTypeDetails: boolean;
   selectedUnitType: UnitTypeStats | null;
   selectUnitType: (name: string) => void;
   /** Opens the site tab on one unit of a site. */
@@ -58,41 +70,35 @@ export function useOeeViewModel(): OeeViewModel {
   const { state, setState } = useOeeState();
   const { view, siteId, unitId, unitType, range } = state;
 
-  const sitesQuery = useQuery({
-    queryKey: ['oee', 'sites'],
-    queryFn: () => service.listSites(),
-  });
+  const sitesQuery = useSitesQuery();
   const sites = sitesQuery.data ?? [];
 
-  // The overview and the unit types need the units of every site; the site tab reuses them
-  // from the same cache.
-  const needsAllSites = view === 'overview' || view === 'units';
-  const siteUnitQueries = useQueries({
-    queries: (needsAllSites ? sites : []).map((site) => ({
-      queryKey: ['oee', 'units', site.externalId],
-      queryFn: () => service.listUnits(site.externalId),
-    })),
-  });
+  // The overview and the unit types need every unit of every site: one shared read.
+  const allUnitsQuery = useAllUnitsQuery(view === 'overview' || view === 'units');
 
-  // Unit types: every unit of every site, then what each did over the time frame.
-  const allUnits =
-    view === 'units' && sites.length > 0 && siteUnitQueries.every((query) => query.data !== undefined)
-      ? sites.flatMap((site, index) => (siteUnitQueries[index]?.data ?? []).map((unit) => ({ site, unit })))
-      : null;
+  // Unit types: what each unit did over the time frame.
+  const allUnits = view === 'units' ? (allUnitsQuery.data ?? null) : null;
   const allUnitIds = allUnits?.map(({ unit }) => unit.externalId) ?? [];
   // One common end for every unit, so the types are compared over the same window.
   const statsEnd = latestTimestamp(allUnits?.map(({ unit }) => unit.updatedAt) ?? []);
 
-  const unitStatsQuery = useQuery({
-    queryKey: ['oee', 'unitStats', range, statsEnd, allUnitIds.length],
-    queryFn: () => (statsEnd === null ? Promise.resolve([]) : service.getUnitPeriodStats(allUnitIds, statsEnd, range)),
+  // The OEE statistics rank the types: they are read first, so the ranking shows early.
+  const oeeStatsQuery = useQuery({
+    queryKey: ['oee', 'unitOeeStats', range, statsEnd, allUnitIds.length],
+    queryFn: () => (statsEnd === null ? Promise.resolve([]) : service.getUnitOeeStats(allUnitIds, statsEnd, range)),
     enabled: allUnits !== null && statsEnd !== null,
   });
+  // Quality, performance and availability fill their columns afterwards.
+  const componentsQuery = useQuery({
+    queryKey: ['oee', 'unitComponentMeans', range, statsEnd, allUnitIds.length],
+    queryFn: () =>
+      statsEnd === null ? Promise.resolve([]) : service.getUnitComponentMeans(allUnitIds, statsEnd, range),
+    enabled: allUnits !== null && statsEnd !== null && oeeStatsQuery.data !== undefined,
+  });
 
-  const unitTypes = toUnitTypes(allUnits, unitStatsQuery.data);
+  const unitTypes = toUnitTypes(allUnits, oeeStatsQuery.data, componentsQuery.data);
   const selectedUnitType = unitTypes.find((type) => type.name === unitType) ?? null;
-  const siteUnitsError = siteUnitQueries.find((query) => query.error !== null)?.error ?? null;
-  const unitTypesError = sitesQuery.error ?? siteUnitsError ?? unitStatsQuery.error;
+  const unitTypesError = allUnitsQuery.error ?? oeeStatsQuery.error ?? componentsQuery.error;
 
   const unitsQuery = useQuery({
     queryKey: ['oee', 'units', siteId],
@@ -149,7 +155,7 @@ export function useOeeViewModel(): OeeViewModel {
     selectView,
     sites: toRegion(sitesQuery, 'The sites could not be loaded.'),
     overview: {
-      items: view === 'overview' ? sites.map((site, index) => toSiteOverview(site, siteUnitQueries[index])) : [],
+      items: view === 'overview' ? sites.map((site) => toSiteOverview(site, allUnitsQuery)) : [],
       isLoading: sitesQuery.isLoading,
       error: sitesQuery.error === null ? null : `The sites could not be loaded. ${sitesQuery.error.message}`.trim(),
     },
@@ -159,12 +165,13 @@ export function useOeeViewModel(): OeeViewModel {
       isLoading:
         view === 'units' &&
         unitTypesError === null &&
-        (sitesQuery.isLoading || allUnits === null || unitStatsQuery.isLoading),
+        (allUnits === null || (statsEnd !== null && oeeStatsQuery.data === undefined)),
       error:
         view !== 'units' || unitTypesError === null
           ? null
           : `The unit statistics could not be loaded. ${unitTypesError.message}`.trim(),
     },
+    isLoadingUnitTypeDetails: view === 'units' && unitTypes.length > 0 && componentsQuery.data === undefined,
     selectedUnitType,
     selectUnitType,
     openUnit,
@@ -193,33 +200,42 @@ function toRegion<T>(query: QueryState<T>, message: string): DataRegion<T> {
   };
 }
 
-function toSiteOverview(site: Site, query: QueryState<UnitOee> | undefined): SiteOverview {
-  const units = query?.data;
+function toSiteOverview(site: Site, query: QueryState<SiteUnit>): SiteOverview {
+  const units = query.data?.filter((siteUnit) => siteUnit.site.externalId === site.externalId).map(({ unit }) => unit);
   return {
     site,
     summary: units === undefined ? null : summarizeSite(units),
     lowestUnits: units === undefined ? [] : lowestUnits(units, LOWEST_UNIT_COUNT),
-    isLoading: query?.isLoading ?? true,
-    error: query === undefined || query.error === null ? null : `The units could not be loaded. ${query.error.message}`.trim(),
+    isLoading: query.isLoading,
+    error: query.error === null ? null : `The units could not be loaded. ${query.error.message}`.trim(),
   };
 }
 
 function toUnitTypes(
-  allUnits: { site: Site; unit: UnitOee }[] | null,
-  stats: UnitPeriodStats[] | undefined
+  allUnits: SiteUnit[] | null,
+  oeeStats: UnitOeeStats[] | undefined,
+  componentMeans: UnitComponentMeans[] | undefined
 ): UnitTypeStats[] {
-  if (allUnits === null || stats === undefined) return [];
-  const statsByUnit = new Map(stats.map((unitStats) => [unitStats.externalId, unitStats]));
+  if (allUnits === null || oeeStats === undefined) return [];
+  const oeeByUnit = new Map(oeeStats.map((stats) => [stats.externalId, stats]));
+  const componentsByUnit = new Map((componentMeans ?? []).map((means) => [means.externalId, means]));
   return groupUnitTypes(
-    allUnits.map(({ site, unit }) => ({ site, unit, stats: statsByUnit.get(unit.externalId) ?? null }))
+    allUnits.map(({ site, unit }) => {
+      const oee = oeeByUnit.get(unit.externalId);
+      const components = componentsByUnit.get(unit.externalId);
+      return {
+        site,
+        unit,
+        stats:
+          oee === undefined
+            ? null
+            : {
+                ...oee,
+                quality: components?.quality ?? null,
+                performance: components?.performance ?? null,
+                availability: components?.availability ?? null,
+              },
+      };
+    })
   );
-}
-
-/** The latest of the given timestamps, or null when there is none. */
-function latestTimestamp(timestamps: (number | null)[]): number | null {
-  let latest: number | null = null;
-  for (const timestamp of timestamps) {
-    if (timestamp !== null && (latest === null || timestamp > latest)) latest = timestamp;
-  }
-  return latest;
 }

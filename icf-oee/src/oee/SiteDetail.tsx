@@ -1,9 +1,9 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@cognite/aura/components/card';
+import { lazy, Suspense } from 'react';
 
 import { formatDateTime, formatPercent, summarizeTrend } from './oeeFormat';
 import { summarizeSite } from './oeeKpi';
 import { Empty, ErrorMessage, Loading } from './OeeStates';
-import { OeeTrendChart } from './OeeTrendChart';
 import { SiteKpiTiles } from './SiteKpiTiles';
 import { SiteSelect } from './SiteSelect';
 import { TrendRangeControl } from './TrendRangeControl';
@@ -11,6 +11,9 @@ import { getTrendRange } from './types';
 import type { TrendPoint, TrendRange, TrendRangeId, UnitOee } from './types';
 import { UnitTable } from './UnitTable';
 import type { OeeViewModel } from './useOeeViewModel';
+
+// The chart library is the heaviest part of the app: it is loaded when a chart is first shown.
+const OeeTrendChart = lazy(() => import('./OeeTrendChart').then((module) => ({ default: module.OeeTrendChart })));
 
 type SiteDetailProps = Pick<
   OeeViewModel,
@@ -144,7 +147,9 @@ function TrendRegion({ unitName, range, isLoading, error, points }: TrendRegionP
   }
   return (
     <>
-      <OeeTrendChart unitName={unitName} bucket={range.bucket} points={points} />
+      <Suspense fallback={<Loading label="Loading chart…" />}>
+        <OeeTrendChart unitName={unitName} bucket={range.bucket} points={points} />
+      </Suspense>
       <p className="text-sm text-muted-foreground">{summarizeTrendText(points, range)}</p>
     </>
   );
